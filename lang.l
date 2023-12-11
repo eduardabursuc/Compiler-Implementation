@@ -1,12 +1,14 @@
 %{
-    #include <iostream>
-    #include <string.h>
-    #include "lang.tab.h"
+#include <stdio.h>
+#include "string.h"
 %}
-
 %option noyywrap
-
 %%
+"int"|"float"|"char"|"string" {yylval.string = strdup(yytext);return TYPE;}
+"begin_progr" {return BGIN;}
+"end_progr" {return END;}
+[a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
+":=" {return ASSIGN;}
 "ENTRYPOINT" { return ENTRY; }
 "EXITPOINT" { return EXIT; }
 "master" { return MAIN; }
@@ -19,11 +21,6 @@
 "for" { return FOR; }
 "switch" { return SWITCH; }
 "case" { return CASE; }
-"int" { return INT; }
-"float" { return FLOAT; }
-"char" { return CHAR; }
-"bool" { return BOOL; }
-"string" { return STRING; }
 "add" { return PLUS; }
 "sub" { return MINUS; }
 "mul" { return MUL; }
@@ -40,5 +37,12 @@
 "not" { return NOT; }
 "true" { return TRUE; }
 "false" { return FALSE; }
+"break" { return BREAK; }
 "print" { return PRINT; }
-%%
+[0-9]+ {return NR;}
+[ \t] ;
+\n {yylineno++;}
+. {return yytext[0];}
+
+ 
+
