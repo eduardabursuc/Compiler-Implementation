@@ -11,9 +11,12 @@ void yyerror(const char * s);
 %union {
      char* string;
      int integer;
+     int boolean;
+     char character;
+     float floatnum;
 }
 %token INT FLOAT BOOL CHAR STRING
-%token ASSIGN PLUS MINUS MUL DIV MOD EQ NEQ GT GEQ LT LEQ AND OR NOT TRUE FALSE
+%token ASSIGN PLUS MINUS MUL DIV MOD EQ NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
 %token ENTRY EXIT MAIN FNENTRY FNEXIT RETURN PRINT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC
 %token<string> ID TYPE 
