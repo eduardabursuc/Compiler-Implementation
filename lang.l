@@ -1,20 +1,19 @@
 %{
 #include <stdio.h>
-#include "string.h"
+#include "lang.tab.h"
 %}
+
 %option noyywrap
 %%
-"int"|"float"|"char"|"string" {yylval.string = strdup(yytext);return TYPE;}
-"begin_progr" {return BGIN;}
-"end_progr" {return END;}
-[a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
-":=" {return ASSIGN;}
-"ENTRYPOINT" { return ENTRY; }
-"EXITPOINT" { return EXIT; }
+"ENTRY" { return ENTRY; }
+"EXIT" { return EXIT; }
+"USRDEF" { return USRDEF; }
+"GLOBALVAR" { return GLOBALVAR; }
+"GLOBALFUNC" { return GLOBALFUNC; }
 "master" { return MAIN; }
 "fnentry" { return FNENTRY; }
 "fnexit" { return FNEXIT; }
-"return" { return RETURN; }
+"ret" { return RETURN; }
 "if" { return IF; }
 "else" { return ELSE; }
 "while" { return WHILE; }
@@ -29,9 +28,9 @@
 "eq" { return EQ; }
 "neq" { return NEQ; }
 "gt" { return GT; }
-"ge" { return GE; }
+"geq" { return GEQ; }
 "lt" { return LT; }
-"le" { return LE; }
+"leq" { return LEQ; }
 "and" { return AND; }
 "or" { return OR; }
 "not" { return NOT; }
@@ -39,10 +38,11 @@
 "false" { return FALSE; }
 "break" { return BREAK; }
 "print" { return PRINT; }
-[0-9]+ {return NR;}
+"=" {return ASSIGN;}
+"int"|"float"|"char"|"string" {yylval.string = strdup(yytext);return TYPE;}
+[a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
+[0-9]+ { yylval.integer = atoi(yytext); return INT; }
+\"[^"]*\" { yylval.string = strdup(yytext); return STRING; }
 [ \t] ;
-\n {yylineno++;}
+(\r|\n|\r\n) {yylineno++;}
 . {return yytext[0];}
-
- 
-

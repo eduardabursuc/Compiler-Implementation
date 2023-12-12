@@ -1,0 +1,14 @@
+ENTRY
+USRDEF
+GLOBALVAR
+
+int count;
+string message;
+
+GLOBALFUNC
+
+master{
+    count = 10;
+    message = "Hello, World!";
+}
+EXIT
