@@ -1,12 +1,16 @@
 %{
 #include <iostream>
 #include <vector>
+#include "lang.h"
+
 
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
 extern int yylex();
 void yyerror(const char * s);
+class IdList ids;
+
 %}
 %union {
      char* string;
@@ -19,46 +23,51 @@ void yyerror(const char * s);
 %token ASSIGN PLUS MINUS MUL DIV MOD EQ NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
 %token ENTRY EXIT MAIN FNENTRY FNEXIT RETURN PRINT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC
-%token<string> ID TYPE 
+%token ARRAY CLASS LBRACKET RBRACKET
+%token ARRAY_ELEMENT CLASS_ELEMENT
+%token<string> ID TYPE BID
+
 %start program
 %%
 
 program: ENTRY USRDEF user_defined_types GLOBALVAR global_variables GLOBALFUNC global_functions MAIN '{' block '}' EXIT {printf("Program is correct!\n");}
        ;
 
-user_defined_types: /* define rules for user defined types */
+user_defined_types: 
                   | user_defined_types user_defined_type
                   ;
 
-user_defined_type: TYPE ID '{' field_declarations '}' ';' { /* handle user defined type declaration */ }
+user_defined_type: TYPE ID '{' field_declarations '}' ';' { }
 
-field_declarations: /* define rules for field declarations */
+field_declarations: 
                    | field_declarations field_declaration
                    ;
 
-field_declaration: TYPE ID ';' { /* handle field declaration */ }
+field_declaration: TYPE ID ';' {  }
                     ;
 
-global_variables: /* define rules for global variables */
+global_variables: 
                   | global_variables global_variable
                   ;
 
-global_variable: TYPE ID ';' { /* handle global variable declaration */ }
+global_variable: TYPE ID ';' { if(!ids.existsVar($2)) {
+                          ids.addVar($1,$2);
+                     }}
                ;
 
-global_functions: /* define rules for global functions */
+global_functions: 
                 | global_functions global_function
                 ;
 
-global_function: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' FNEXIT';' { /* handle global function declaration */ }
+global_function: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' FNEXIT';' { }
                ;
 
-parameter_list: /* define rules for parameter list */
+parameter_list: 
                  | parameter
                  | parameter_list ',' parameter
                  ;
 
-parameter: TYPE ID { /* handle parameter declaration */ }
+parameter: TYPE ID { }
            ;
 
 block: statement
@@ -70,13 +79,10 @@ statement: assignment_statement { /* handle assignment statement */ }
          | function_call ';' { /* handle function call */ }
          ;
 
-assignment_statement: ID ASSIGN expression ';' { /* handle assignment statement */ }
+assignment_statement: ID ASSIGN expression ';' { }
                     ;
 
 control_statement: ';' { /* handle control statement */ }
-
-/* expression: ';' { }
-          ; */
 
 expression: ID
           | INT
@@ -99,4 +105,6 @@ printf("error: %s at line:%d\n",s,yylineno);
 int main(int argc, char** argv){
      yyin=fopen(argv[1],"r");
      yyparse();
+     cout << "Variables:" <<endl;
+     ids.printVars();
 }
