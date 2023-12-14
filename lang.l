@@ -40,7 +40,6 @@
 "print" { return PRINT; }
 "=" {return ASSIGN;}
 "int"|"float"|"char"|"string" {yylval.string = strdup(yytext);return TYPE;}
-b[a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return BID;}
 [a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
 [0-9]+ { yylval.integer = atoi(yytext); return INT; }
 [0-9]+\.[0-9]+ { yylval.floatnum = atof(yytext); return FLOAT; }
