@@ -1,7 +1,15 @@
 %{
 #include <iostream>
 #include <vector>
+#include "lang.h"
 
+vector<ClassInfo> classes;
+vector<Vars> fieldVars;
+vector<FunctionInfo> fieldFuncs;
+
+vector<FunctionInfo> globalFuncs;
+
+class IdList ids;
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
@@ -14,12 +22,15 @@ void yyerror(const char * s);
      int boolean;
      char character;
      float floatnum;
+     Vars varType;
+     FunctionInfo funcType;
+     ListParam listParams;
 }
 %token INT FLOAT BOOL CHAR STRING ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS
 %token ASSIGN PLUS MINUS MUL DIV MOD EQ NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
-%token ENTRY EXIT MAIN FNENTRY FNEXIT RETURN PRINT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC
-%token<string> ID TYPE 
+%token ENTRY EXIT MAIN FNENTRY FNEXIT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC RETURN PRINT
+%token<string> ID TYPE //BID
 
 %left OR 
 %left AND
@@ -31,6 +42,13 @@ void yyerror(const char * s);
 %left MUL DIV MOD 
 
 %start program
+
+%type <funcType> field_functions
+%type <funcType> function_declaration
+%type <varType> field_variables variable_declaration
+%type <varType> parameter
+%type <listParams> parameter_list
+
 %%
 
 program: ENTRY USRDEF user_defined_types GLOBALVAR global_variables GLOBALFUNC global_functions MAIN '{' block '}' EXIT {printf("Program is correct!\n");}
@@ -40,38 +58,80 @@ user_defined_types: /* define rules for user defined types */
                   | user_defined_types user_defined_type
                   ;
 
-user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' { /* handle user defined type declaration */ }
+user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' {
+     for (const auto& cls : classes) {
+          if (cls.name == $2) {
+               cout << "Class " << $2 << " already exists" << endl;
+               return;
+          }
+     }
+     ClassInfo classInfo($2, fieldVars, fieldFuncs);
+     classes.push_back(classInfo);
+     fieldVars.clear();
+     fieldFuncs.clear();
+}
+                 ;
 
-field_variables: /* empty */
-               | field_variables variable_declaration
-	       ;
+field_variables: { $$ = Vars(); }
+               | field_variables variable_declaration {{ 
+                   Vars var = $2;
+                   fieldVars.push_back(var);
+               }}
+	          ;
 
                
-field_functions: /* empty */
-               | field_functions function_declaration
+field_functions: { $$ = FunctionInfo(); }
+               | field_functions function_declaration {{ 
+                   FunctionInfo funcInfo = $2;
+                   fieldFuncs.push_back(funcInfo);
+               }}
 	       ;
 	       
-function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' FNEXIT';' { /* handle function declaration */ }
+function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' FNEXIT';' {
+     for (const auto& func : globalFuncs) {
+          if (func.name == $3) {
+               cout << "Function " << $3 << " already exists" << endl;
+               return;
+          }
+     }
+     FunctionInfo funcInfo($3, $2, "local", $5);
+     $$ = funcInfo;
+}
                     ;	       
 
-global_variables: /* define rules for global variables */
+global_variables: 
                   | global_variables variable_declaration
                   ;
 
-global_functions: /* define rules for global functions */
+global_functions: 
                 | global_functions function_declaration
                 ;
 
-parameter_list: /* define rules for parameter list */
-                 | parameter
-                 | parameter_list ',' parameter
-                 ;
+parameter_list:  { $$ = ListParam(); }
+               | parameter { $$ = ListParam(); $$->list.push_back($1); }
+               | parameter_list ',' parameter { $$ = $1; $$->list.push_back($3); }
+               ;
 
-parameter: TYPE ID { /* handle parameter declaration */ } ;
 
-variable_declaration: TYPE ID ';' { /* handle variable declaration */ }
-	            | TYPE ID ASSIGN expression ';' { /* handle variabledeclaration */ }
-                    ; 
+parameter: TYPE ID { 
+    Vars var;
+    var.name = $2;
+    var.info.type = $1;
+    $$ = var;
+} ;
+
+variable_declaration: TYPE ID ';' {if !ids.existsVar($2) {
+    Vars var($2, "global", Info($1, ""));
+    ids.addVar(var);
+    $$ = var;
+}}
+                    | TYPE ID ASSIGN expression ';' {if !ids.existsVar($2){
+    Vars var($2, "global", Info($1, $4));
+    ids.addVar(var);
+    $$ = var;
+}}
+                    ;
+
                                                         
 class_var_declaration: CLASS ID ID ';'
                      | CLASS ID ID ASSIGN ID ';'
@@ -146,6 +206,7 @@ expression: arithm_expr
           | bool_expr
           | STRING
           ;
+
  
         
 arithm_expr: arithm_expr PLUS arithm_expr
@@ -195,4 +256,32 @@ printf("error: %s at line:%d\n",s,yylineno);
 int main(int argc, char** argv){
      yyin=fopen(argv[1],"r");
      yyparse();
+     cout << "Variables:" <<endl;
+     ids.printVars();
+
+     cout << "Classes:" << endl;
+     for (const auto& cls : classes) 
+     {
+          cout << "Class: " << cls.name << endl;
+        
+          cout << "  Fields:" << endl;
+          for (const auto& field : cls.fields) 
+               cout << "    Field Name: " << field.name << ", Type: " << field.info.type << ", Value: " << field.info.val << endl;
+
+          cout << "  Methods:" << endl;
+          for (const auto& method : cls.methods) {
+               cout << "    Method Name: " << method.name << ", Return Type: " << method.type << endl;
+               cout << "    Parameters:" << endl;
+               for (const auto& param : method.params.list)
+                    cout << "      Param Name: " << param.name << ", Type: " << param.info.type << endl;
+        }
+     }
+
+     cout << "Global Functions:" << endl;
+     for (const auto& func : globalFuncs) {
+          cout << "Function: " << func.name << " Return Type: " << func.type << endl;
+          cout << "Parameters:" << endl;
+          for (const auto& param : func.params.list)
+               cout << "  Param Name: " << param.name << ", Type: " << param.info.type << endl;
+    }
 }

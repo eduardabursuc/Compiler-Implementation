@@ -60,43 +60,44 @@ extern int yydebug;
     CHAR = 261,                    /* CHAR  */
     STRING = 262,                  /* STRING  */
     ARRAY_ELEMENT = 263,           /* ARRAY_ELEMENT  */
-    CLASS_ELEMENT = 264,           /* CLASS_ELEMENT  */
-    ASSIGN = 265,                  /* ASSIGN  */
-    PLUS = 266,                    /* PLUS  */
-    MINUS = 267,                   /* MINUS  */
-    MUL = 268,                     /* MUL  */
-    DIV = 269,                     /* DIV  */
-    MOD = 270,                     /* MOD  */
-    EQ = 271,                      /* EQ  */
-    NEQ = 272,                     /* NEQ  */
-    GT = 273,                      /* GT  */
-    GEQ = 274,                     /* GEQ  */
-    LT = 275,                      /* LT  */
-    LEQ = 276,                     /* LEQ  */
-    AND = 277,                     /* AND  */
-    OR = 278,                      /* OR  */
-    NOT = 279,                     /* NOT  */
-    IF = 280,                      /* IF  */
-    ELSE = 281,                    /* ELSE  */
-    WHILE = 282,                   /* WHILE  */
-    FOR = 283,                     /* FOR  */
-    SWITCH = 284,                  /* SWITCH  */
-    CASE = 285,                    /* CASE  */
-    ENTRY = 286,                   /* ENTRY  */
-    EXIT = 287,                    /* EXIT  */
-    MAIN = 288,                    /* MAIN  */
-    FNENTRY = 289,                 /* FNENTRY  */
-    FNEXIT = 290,                  /* FNEXIT  */
-    RETURN = 291,                  /* RETURN  */
-    PRINT = 292,                   /* PRINT  */
+    CLASS_VAR = 264,               /* CLASS_VAR  */
+    CLASS_METHOD = 265,            /* CLASS_METHOD  */
+    CLASS = 266,                   /* CLASS  */
+    ASSIGN = 267,                  /* ASSIGN  */
+    PLUS = 268,                    /* PLUS  */
+    MINUS = 269,                   /* MINUS  */
+    MUL = 270,                     /* MUL  */
+    DIV = 271,                     /* DIV  */
+    MOD = 272,                     /* MOD  */
+    EQ = 273,                      /* EQ  */
+    NEQ = 274,                     /* NEQ  */
+    GT = 275,                      /* GT  */
+    GEQ = 276,                     /* GEQ  */
+    LT = 277,                      /* LT  */
+    LEQ = 278,                     /* LEQ  */
+    AND = 279,                     /* AND  */
+    OR = 280,                      /* OR  */
+    NOT = 281,                     /* NOT  */
+    IF = 282,                      /* IF  */
+    ELSE = 283,                    /* ELSE  */
+    WHILE = 284,                   /* WHILE  */
+    FOR = 285,                     /* FOR  */
+    SWITCH = 286,                  /* SWITCH  */
+    CASE = 287,                    /* CASE  */
+    ENTRY = 288,                   /* ENTRY  */
+    EXIT = 289,                    /* EXIT  */
+    MAIN = 290,                    /* MAIN  */
+    FNENTRY = 291,                 /* FNENTRY  */
+    FNEXIT = 292,                  /* FNEXIT  */
     BREAK = 293,                   /* BREAK  */
     DEFAULT = 294,                 /* DEFAULT  */
     USRDEF = 295,                  /* USRDEF  */
     GLOBALVAR = 296,               /* GLOBALVAR  */
     GLOBALFUNC = 297,              /* GLOBALFUNC  */
-    ID = 298,                      /* ID  */
-    TYPE = 299,                    /* TYPE  */
-    CLASS = 300                    /* CLASS  */
+    RETURN = 298,                  /* RETURN  */
+    PRINT = 299,                   /* PRINT  */
+    ID = 300,                      /* ID  */
+    TYPE = 301                     /* TYPE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -105,15 +106,18 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 11 "lang.y"
+#line 21 "lang.y"
 
      char* string;
      int integer;
      int boolean;
      char character;
      float floatnum;
+     Vars varType;
+     FunctionInfo funcType;
+     ListParam listParams;
 
-#line 117 "lang.tab.h"
+#line 121 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

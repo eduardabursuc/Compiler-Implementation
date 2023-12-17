@@ -3,7 +3,7 @@ USRDEF
 GLOBALVAR
 
 int count;
-string message;
+string message = "hello";
 
 GLOBALFUNC
 
