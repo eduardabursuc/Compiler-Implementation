@@ -15,11 +15,11 @@ void yyerror(const char * s);
      char character;
      float floatnum;
 }
-%token INT FLOAT BOOL CHAR STRING ARRAY_ELEMENT CLASS_ELEMENT
+%token INT FLOAT BOOL CHAR STRING ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS
 %token ASSIGN PLUS MINUS MUL DIV MOD EQ NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
 %token ENTRY EXIT MAIN FNENTRY FNEXIT RETURN PRINT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC
-%token<string> ID TYPE CLASS
+%token<string> ID TYPE 
 
 %left OR 
 %left AND
@@ -40,42 +40,78 @@ user_defined_types: /* define rules for user defined types */
                   | user_defined_types user_defined_type
                   ;
 
-user_defined_type: CLASS ID '{' field_declarations '}' ';' { /* handle user defined type declaration */ }
+user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' { /* handle user defined type declaration */ }
 
-field_declarations: /* define rules for field declarations */
-                   | field_declarations field_declaration
-                   ;
+field_variables: /* empty */
+               | field_variables variable_declaration
+	       ;
 
-field_declaration: TYPE ID ';' { /* handle field declaration */ }
-                    ;
+               
+field_functions: /* empty */
+               | field_functions function_declaration
+	       ;
+	       
+function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' FNEXIT';' { /* handle function declaration */ }
+                    ;	       
 
 global_variables: /* define rules for global variables */
-                  | global_variables global_variable
+                  | global_variables variable_declaration
                   ;
 
-global_variable: TYPE ID ';' { /* handle global variable declaration */ }
-               ;
-
 global_functions: /* define rules for global functions */
-                | global_functions global_function
+                | global_functions function_declaration
                 ;
-
-global_function: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' FNEXIT';' { /* handle global function declaration */ }
-               ;
 
 parameter_list: /* define rules for parameter list */
                  | parameter
                  | parameter_list ',' parameter
                  ;
 
-parameter: TYPE ID { /* handle parameter declaration */ }
+parameter: TYPE ID { /* handle parameter declaration */ } ;
+
+variable_declaration: TYPE ID ';' { /* handle variable declaration */ }
+	            | TYPE ID ASSIGN expression ';' { /* handle variabledeclaration */ }
+                    ; 
+                                                        
+class_var_declaration: CLASS ID ID ';'
+                     | CLASS ID ID ASSIGN ID ';'
+                     | CLASS ID ID ASSIGN fn_call ';'
+                     ;
+                     
+array_declaration: TYPE ID '[' INT ']' ';' 
+                 | TYPE ID '['']' ASSIGN '[' one_type_values ']' ';'
+                 ;
+                 
+one_type_values: int_values
+               | float_values
+               | bool_values
+               | char_values
+               ;
+               
+int_values: int_values INT
+          | INT
+          ;
+          
+float_values: float_values FLOAT
+            | FLOAT
+            ;
+            
+bool_values: bool_values BOOL
+           | BOOL
+           ;
+           
+char_values: char_values CHAR
+           | CHAR
            ;
 
 block: statement
      | block statement
      ;
 
-statement: assignment_statement { /* handle assignment statement */ }
+statement: variable_declaration
+         | array_declaration
+         | class_var_declaration
+         | assignment_statement { /* handle assignment statement */ }
          | control_statement { /* handle control statement */ }
          | fn_call ';' { /* handle function call */ }
          ;
@@ -102,11 +138,13 @@ value: INT
      | FLOAT
      | BOOL
      | fn_call
+     | STRING
      ;
             
 
 expression: arithm_expr
           | bool_expr
+          | STRING
           ;
  
         
@@ -119,9 +157,12 @@ arithm_expr: arithm_expr PLUS arithm_expr
            | INT
            | FLOAT
            | fn_call
+           | ID
            | ARRAY_ELEMENT
-           | CLASS_ELEMENT
-           ;       
+           | CLASS_VAR
+           | CLASS_METHOD
+           ;   
+               
       
 bool_expr: bool_expr AND bool_expr
          | bool_expr OR bool_expr

@@ -39,10 +39,15 @@
 "break" { return BREAK; }
 "print" { return PRINT; }
 "=" {return ASSIGN;}
-"int"|"float"|"char"|"string" {yylval.string = strdup(yytext);return TYPE;}
+"int"|"float"|"char"|"string"|"bool" {yylval.string = strdup(yytext);return TYPE;}
+"class" {yylval.string = strdup(yytext); return CLASS;}
+[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z][a-zA-Z0-9] { yylval.string = strdup(yytext); return CLASS_VAR; }
+[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z][a-zA-Z0-9]*\([^)]*\) { yylval.string = strdup(yytext); return CLASS_METHOD; }
+[a-zA-Z][a-zA-Z0-9]*\[[1-9][0-9]*|0\] { yylval.string = strdup(yytext); return ARRAY_ELEMENT; }
+[a-zA-Z][a-zA-Z0-9]*\[[a-zA-Z][a-zA-Z0-9]*\] { yylval.string = strdup(yytext); return ARRAY_ELEMENT; }
 [a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
-[0-9]+ { yylval.integer = atoi(yytext); return INT; }
-[0-9]+\.[0-9]+ { yylval.floatnum = atof(yytext); return FLOAT; }
+[1-9][0-9]+|0 { yylval.integer = atoi(yytext); return INT; }
+([1-9][0-9]+|0)\.[0-9]+ { yylval.floatnum = atof(yytext); return FLOAT; }
 \"[^"]*\" { yylval.string = strdup(yytext); return STRING; }
 \'[^']\' { yylval.character = yytext[0]; return CHAR; }
 [ \t] ;
