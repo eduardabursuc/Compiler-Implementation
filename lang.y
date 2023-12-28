@@ -26,11 +26,11 @@ void yyerror(const char * s);
      FunctionInfo funcType;
      ListParam listParams;
 }
-%token INT FLOAT BOOL CHAR STRING ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS
+%token INT FLOAT BOOL CHAR STRING ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS CONST
 %token ASSIGN PLUS MINUS MUL DIV MOD EQ NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
 %token ENTRY EXIT MAIN FNENTRY FNEXIT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC RETURN PRINT
-%token<string> ID TYPE //BID
+%token<string> ID TYPE EVAL TYPEOF
 
 %left OR 
 %left AND
@@ -72,7 +72,7 @@ user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' {
 }
                  ;
 
-field_variables: { $$ = Vars(); }
+field_variables: /*empty*/{ $$ = Vars(); }
                | field_variables variable_declaration {{ 
                    Vars var = $2;
                    fieldVars.push_back(var);
@@ -80,14 +80,14 @@ field_variables: { $$ = Vars(); }
 	          ;
 
                
-field_functions: { $$ = FunctionInfo(); }
+field_functions: /*empty*/{ $$ = FunctionInfo(); }
                | field_functions function_declaration {{ 
                    FunctionInfo funcInfo = $2;
                    fieldFuncs.push_back(funcInfo);
                }}
 	       ;
 	       
-function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' FNEXIT';' {
+function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}'  {
      for (const auto& func : globalFuncs) {
           if (func.name == $3) {
                cout << "Function " << $3 << " already exists" << endl;
@@ -129,7 +129,8 @@ variable_declaration: TYPE ID ';' {if !ids.existsVar($2) {
     Vars var($2, "global", Info($1, $4));
     ids.addVar(var);
     $$ = var;
-}}
+}} 
+                    | CONST TYPE ID ASSIGN expression ';' 
                     ;
 
                                                         
@@ -205,23 +206,31 @@ value: INT
 expression: arithm_expr
           | bool_expr
           | STRING
+          | CHAR
           ;
 
  
         
-arithm_expr: arithm_expr PLUS arithm_expr
-           | arithm_expr MINUS arithm_expr
-           | arithm_expr DIV arithm_expr
-           | arithm_expr MUL arithm_expr
-           | arithm_expr MOD arithm_expr
-           | '(' arithm_expr ')'
-           | INT
-           | FLOAT
-           | fn_call
-           | ID
-           | ARRAY_ELEMENT
-           | CLASS_VAR
-           | CLASS_METHOD
+arithm_expr: arithm_expr PLUS arithm_expr { if ( $1->type == $3->type ) $$ = $1 + $3; else { printf("Addition between diffrent type members.\n"); return 1 ; }}
+           | arithm_expr MINUS arithm_expr { if ( $1->type == $3->type ) $$ = $1 - $3; else { printf("Subtraction between diffrent type members.\n"); return 1 ; }}
+           | arithm_expr DIV arithm_expr { if ( $1->type == $3->type ) $$ = $1 / $3; else { printf("Division between diffrent type members.\n"); return 1 ; }}
+           | arithm_expr MUL arithm_expr { if ( $1->type == $3->type ) $$ = $1 * $3; else { printf("Multiplication between diffrent type members.\n"); return 1 ; }}
+           | arithm_expr MOD arithm_expr { if ( $1->type == $3->type && $1->type.compare(string("int")) == 0 ) $$ = $1 % $3; else { printf("Modulo between diffrent type members.\n"); return 1 ; }}
+           | '(' arithm_expr ')' 
+           | INT { $$ += $1.value.ToType("int"); }
+           | FLOAT { $$ += $1.value.ToType("float"); }
+           | fn_call 
+           | ID { if( !ids.existsVar($1) ) {
+           		printf("Undeclared variable.\n");
+           	   } else {
+           	   	
+           	   }
+           	} 
+           | ID '.' ID  // class variable
+           | ID '.' fn_call // class methos
+           | ID '[' ID ']' // array type a[index]
+           | ID '[' INT ']' // array type a[7]
+           | ID '[' fn_call ']' // array type a[get_index()]
            ;   
                
       
