@@ -3,17 +3,18 @@
 #include <vector>
 #include "lang.h"
 
-vector<ClassInfo> classes;
-vector<Vars> fieldVars;
-vector<FunctionInfo> fieldFuncs;
-
-vector<FunctionInfo> globalFuncs;
-
-class IdList ids;
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
 extern int yylex();
+
+class IdList ids;
+std::vector<ClassInfo> classes;
+std::vector<Vars> fieldVars;
+std::vector<FunctionInfo> fieldFuncs;
+std::vector<FunctionInfo> globalFuncs;
+
+
 void yyerror(const char * s);
 %}
 %union {
@@ -25,9 +26,10 @@ void yyerror(const char * s);
      Vars varType;
      FunctionInfo funcType;
      ListParam listParams;
+     Info info;
 }
 %token INT FLOAT BOOL CHAR STRING ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS CONST
-%token ASSIGN PLUS MINUS MUL DIV MOD EQ NEQ GT GEQ LT LEQ AND OR NOT
+%token NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
 %token ENTRY EXIT MAIN FNENTRY FNEXIT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC RETURN PRINT
 %token<string> ID TYPE EVAL TYPEOF
@@ -38,8 +40,8 @@ void yyerror(const char * s);
 %left EQ NEQ
 %left LEQ GEQ LT GT
 
-%left PLUS MINUS
-%left MUL DIV MOD 
+%left '+' '-'
+%left '*' '/' '%' 
 
 %start program
 
@@ -72,32 +74,31 @@ user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' {
 }
                  ;
 
-field_variables: /*empty*/{ $$ = Vars(); }
-               | field_variables variable_declaration {{ 
+field_variables: /*empty*/ { $$ = Vars(); }
+               | field_variables variable_declaration { 
                    Vars var = $2;
                    fieldVars.push_back(var);
-               }}
+               }
 	          ;
 
-               
-field_functions: /*empty*/{ $$ = FunctionInfo(); }
-               | field_functions function_declaration {{ 
+field_functions: /*empty*/ { $$ = FunctionInfo(); }
+               | field_functions function_declaration { 
                    FunctionInfo funcInfo = $2;
                    fieldFuncs.push_back(funcInfo);
-               }}
+               }
 	       ;
-	       
-function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}'  {
+
+function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' {
      for (const auto& func : globalFuncs) {
           if (func.name == $3) {
-               cout << "Function " << $3 << " already exists" << endl;
+               std::cout << "Function " << $3 << " already exists" << std::endl;
                return;
           }
      }
      FunctionInfo funcInfo($3, $2, "local", $5);
      $$ = funcInfo;
-}
-                    ;	       
+} ;
+	       
 
 global_variables: 
                   | global_variables variable_declaration
@@ -108,39 +109,42 @@ global_functions:
                 ;
 
 parameter_list:  { $$ = ListParam(); }
-               | parameter { $$ = ListParam(); $$->list.push_back($1); }
-               | parameter_list ',' parameter { $$ = $1; $$->list.push_back($3); }
+               | parameter { $$ = ListParam(); $$->list.push_back($1); } 
+               | parameter_list ',' parameter  { $$ = $1; $$->list.push_back($3); } 
                ;
 
 
-parameter: TYPE ID { 
+parameter: TYPE ID  { 
     Vars var;
     var.name = $2;
     var.info.type = $1;
     $$ = var;
 } ;
 
-variable_declaration: TYPE ID ';' {if !ids.existsVar($2) {
-    Vars var($2, "global", Info($1, ""));
+variable_declaration: TYPE ID ';' {
+     if (!ids.existsVar($2)){
+        Vars var($2, "global", Info($1, ""));
     ids.addVar(var);
     $$ = var;
-}}
-                    | TYPE ID ASSIGN expression ';' {if !ids.existsVar($2){
-    Vars var($2, "global", Info($1, $4));
-    ids.addVar(var);
-    $$ = var;
+    }
+}
+                    | TYPE ID '=' expression ';' {
+                         if (!ids.existsVar($2)){
+                              Vars var($2, "global", Info($1, $4));
+                              ids.addVar(var);
+                              $$ = var;
 }} 
-                    | CONST TYPE ID ASSIGN expression ';' 
+                    | CONST TYPE ID '=' expression ';'  { }
                     ;
 
                                                         
 class_var_declaration: CLASS ID ID ';'
-                     | CLASS ID ID ASSIGN ID ';'
-                     | CLASS ID ID ASSIGN fn_call ';'
+                     | CLASS ID ID '=' ID ';'
+                     | CLASS ID ID '=' fn_call ';'
                      ;
                      
 array_declaration: TYPE ID '[' INT ']' ';' 
-                 | TYPE ID '['']' ASSIGN '[' one_type_values ']' ';'
+                 | TYPE ID '['']' '=' '[' one_type_values ']' ';'
                  ;
                  
 one_type_values: int_values
@@ -177,7 +181,11 @@ statement: variable_declaration
          | fn_call ';' { /* handle function call */ }
          ;
 
-assignment_statement: ID ASSIGN expression ';' { /* handle assignment statement */ }
+assignment_statement: ID '=' expression ';' 
+     { if (!ids.existsVar($1)) {
+        Vars var($1, "global", Info("", ""));
+        ids.addVar(var); }
+     }
                     ;
 
 control_statement: if_statement
@@ -211,26 +219,26 @@ expression: arithm_expr
 
  
         
-arithm_expr: arithm_expr PLUS arithm_expr { if ( $1->type == $3->type ) $$ = $1 + $3; else { printf("Addition between diffrent type members.\n"); return 1 ; }}
-           | arithm_expr MINUS arithm_expr { if ( $1->type == $3->type ) $$ = $1 - $3; else { printf("Subtraction between diffrent type members.\n"); return 1 ; }}
-           | arithm_expr DIV arithm_expr { if ( $1->type == $3->type ) $$ = $1 / $3; else { printf("Division between diffrent type members.\n"); return 1 ; }}
-           | arithm_expr MUL arithm_expr { if ( $1->type == $3->type ) $$ = $1 * $3; else { printf("Multiplication between diffrent type members.\n"); return 1 ; }}
-           | arithm_expr MOD arithm_expr { if ( $1->type == $3->type && $1->type.compare(string("int")) == 0 ) $$ = $1 % $3; else { printf("Modulo between diffrent type members.\n"); return 1 ; }}
+arithm_expr: arithm_expr '+' arithm_expr /*{ if ( $1->type == $3->type ) $$ = $1 + $3; else { printf("Addition between diffrent type members.\n"); return 1 ; }} */
+           | arithm_expr '-' arithm_expr /*{ if ( $1->type == $3->type ) $$ = $1 - $3; else { printf("Subtraction between diffrent type members.\n"); return 1 ; }} */
+           | arithm_expr '/' arithm_expr /*{ if ( $1->type == $3->type ) $$ = $1 / $3; else { printf("Division between diffrent type members.\n"); return 1 ; }} */
+           | arithm_expr '*' arithm_expr /*{ if ( $1->type == $3->type ) $$ = $1 * $3; else { printf("Multiplication between diffrent type members.\n"); return 1 ; }} */
+           | arithm_expr '%' arithm_expr /*{ if ( $1->type == $3->type && $1->type.compare(string("int")) == 0 ) $$ = $1 % $3; else { printf("Modulo between diffrent type members.\n"); return 1 ; }}*/
            | '(' arithm_expr ')' 
-           | INT { $$ += $1.value.ToType("int"); }
-           | FLOAT { $$ += $1.value.ToType("float"); }
+           | INT /*{ $$ += $1.value.ToType("int"); }*/
+           | FLOAT /*{ $$ += $1.value.ToType("float"); }*/
            | fn_call 
-           | ID { if( !ids.existsVar($1) ) {
+           | ID /* { if( !ids.existsVar($1) ) {
            		printf("Undeclared variable.\n");
            	   } else {
            	   	
            	   }
-           	} 
-           | ID '.' ID  // class variable
-           | ID '.' fn_call // class methos
-           | ID '[' ID ']' // array type a[index]
-           | ID '[' INT ']' // array type a[7]
-           | ID '[' fn_call ']' // array type a[get_index()]
+           	} */
+           | ID '.' ID  /* class variable  */
+           | ID '.' fn_call /* class methos */
+           | ID '[' ID ']' /* array type a[index] */
+           | ID '[' INT ']' /* array type a[7] */
+           | ID '[' fn_call ']' /* array type a[get_index()] */
            ;   
                
       
@@ -258,39 +266,41 @@ argument_list: /* define rules for argument list */
              ;
 
 %%
-void yyerror(const char * s){
-printf("error: %s at line:%d\n",s,yylineno);
+void yyerror(const char * s) {
+    std::cerr << "error: " << s << " at line:" << yylineno << std::endl;
 }
 
-int main(int argc, char** argv){
-     yyin=fopen(argv[1],"r");
-     yyparse();
-     cout << "Variables:" <<endl;
-     ids.printVars();
+int main(int argc, char** argv) {
+    yyin = fopen(argv[1], "r");
+    yyparse();
 
-     cout << "Classes:" << endl;
-     for (const auto& cls : classes) 
-     {
-          cout << "Class: " << cls.name << endl;
+    std::cout << "Variables:" << std::endl;
+    ids.printVars();
+
+    std::cout << "Classes:" << std::endl;
+    for (const auto& cls : classes) {
+        std::cout << "Class: " << cls.name << std::endl;
         
-          cout << "  Fields:" << endl;
-          for (const auto& field : cls.fields) 
-               cout << "    Field Name: " << field.name << ", Type: " << field.info.type << ", Value: " << field.info.val << endl;
+        std::cout << "  Fields:" << std::endl;
+        for (const auto& field : cls.fields) 
+            std::cout << "    Field Name: " << field.name << ", Type: " << field.info.type << ", Value: " << field.info.val << std::endl;
 
-          cout << "  Methods:" << endl;
-          for (const auto& method : cls.methods) {
-               cout << "    Method Name: " << method.name << ", Return Type: " << method.type << endl;
-               cout << "    Parameters:" << endl;
-               for (const auto& param : method.params.list)
-                    cout << "      Param Name: " << param.name << ", Type: " << param.info.type << endl;
+        std::cout << "  Methods:" << std::endl;
+        for (const auto& method : cls.methods) {
+            std::cout << "    Method Name: " << method.name << ", Return Type: " << method.type << std::endl;
+            std::cout << "    Parameters:" << std::endl;
+            for (const auto& param : method.params.list)
+                std::cout << "      Param Name: " << param.name << ", Type: " << param.info.type << std::endl;
         }
-     }
-
-     cout << "Global Functions:" << endl;
-     for (const auto& func : globalFuncs) {
-          cout << "Function: " << func.name << " Return Type: " << func.type << endl;
-          cout << "Parameters:" << endl;
-          for (const auto& param : func.params.list)
-               cout << "  Param Name: " << param.name << ", Type: " << param.info.type << endl;
     }
+
+    std::cout << "Global Functions:" << std::endl;
+    for (const auto& func : globalFuncs) {
+        std::cout << "Function: " << func.name << " Return Type: " << func.type << std::endl;
+        std::cout << "Parameters:" << std::endl;
+        for (const auto& param : func.params.list)
+            std::cout << "  Param Name: " << param.name << ", Type: " << param.info.type << std::endl;
+    }
+
+    return 0;
 }
