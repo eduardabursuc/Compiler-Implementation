@@ -77,6 +77,18 @@ class AST {
     string root;
     AST* left;
     AST* right;
+
+    AST(Value val, string type){
+        this->type = type;
+        this->val = val;
+    }
+
+    AST(string root, AST* left, AST* right){
+        this->root = root;
+        this->left = left;
+        this->right = right;
+    }
+
     Value Eval(){
 
         if (root.empty()) {
