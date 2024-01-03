@@ -124,19 +124,22 @@ parameter: TYPE ID  {
 } ;
 
 variable_declaration: TYPE ID ';' {
-     if (!ids.existsVar($2)){
-        Vars var($2, "global", Info($1, ""));
-    ids.addVar(var);
-    $$ = var;
-    }
-}
+                          if (!ids.existsVar($2)){
+                              Vars var($2, "global", Info($1, ""));
+                              ids.addVar(var);
+                              $$ = var;
+                         }
+                    }
                     | TYPE ID '=' expression ';' {
                          if (!ids.existsVar($2)){
                               Vars var($2, "global", Info($1, $4));
                               ids.addVar(var);
                               $$ = var;
-}} 
-                    | CONST TYPE ID '=' expression ';'  { }
+                         }                   
+                    } 
+                    | CONST TYPE ID '=' expression ';'  { 
+
+                    }
                     ;
 
                                                         
@@ -226,35 +229,35 @@ arithm_expr: arithm_expr '+' arithm_expr { if ( $1->type == $3->type ) $$ = new 
            | arithm_expr '/' arithm_expr { if ( $1->type == $3->type ) $$ = new AST(Value(), '/', $1, $3);  else { printf("Division between diffrent type members.\n"); return 1 ; }} 
            | arithm_expr '*' arithm_expr { if ( $1->type == $3->type ) $$ = new AST(Value(), '*', $1, $3);  else { printf("Multiplication between diffrent type members.\n"); return 1 ; }} 
            | arithm_expr '%' arithm_expr { if ( $1->type == $3->type && $1->type.compare(string("int")) == 0 ) $$ = new AST(Value(), '%', $1, $3);  else { printf("Modulo between diffrent type members.\n"); return 1 ; }}
-           | '(' arithm_expr ')' 
-           | INT { $$ = new AST(new Value($1, "int"), '', NULL, NULL); }
-           | FLOAT { $$ = new AST(new Value($1, "float"), '', NULL, NULL); }
-           | fn_call 
-           | ID /*{ if( !ids.existsVar($1) ) {
+           | '(' arithm_expr ')' {}
+           | INT { $$ = new AST(new Value(INT, "int"), '', NULL, NULL); }
+           | FLOAT { $$ = new AST(new Value(FLOAT, "float"), '', NULL, NULL); }
+           | fn_call { }
+           | ID {}/*{ if( !ids.existsVar($1) ) {
            		printf("Undeclared variable.\n");
            	   } else {
            	   	
            	   }
            	} */
-           | ID '.' ID  /* class variable  */
-           | ID '.' fn_call /* class methos */
-           | ID '[' ID ']' /* array type a[index] */
-           | ID '[' INT ']' /* array type a[7] */
-           | ID '[' fn_call ']' /* array type a[get_index()] */
+           | ID '.' ID { } /* class variable  */
+           | ID '.' fn_call {}/* class methos */
+           | ID '[' ID ']' {}/* array type a[index] */
+           | ID '[' INT ']' {}/* array type a[7] */
+           | ID '[' fn_call ']' {}/* array type a[get_index()] */
            ;   
                
       
-bool_expr: bool_expr AND bool_expr
-         | bool_expr OR bool_expr
-         | NOT bool_expr
-         | '(' bool_expr ')'
-         | BOOL
-         | arithm_expr GT arithm_expr
-         | arithm_expr LT arithm_expr
-         | arithm_expr GEQ arithm_expr
-         | arithm_expr EQ arithm_expr
-         | arithm_expr LEQ arithm_expr
-         | arithm_expr NEQ arithm_expr
+bool_expr: bool_expr AND bool_expr { $$ = new AST(Value(), 'and', $1, $3); }
+         | bool_expr OR bool_expr { $$ = new AST(Value(), 'or', $1, $3); }
+         | NOT bool_expr { $$ = new AST(Value(), 'not', $2, NULL); }
+         | '(' bool_expr ')' {}
+         | BOOL { $$ = new AST(new Value(BOOL, "bool"), '', NULL, NULL); }
+         | arithm_expr GT arithm_expr { $$ = new AST(Value(), 'gt', $1, $3); }
+         | arithm_expr LT arithm_expr { $$ = new AST(Value(), 'lt', $1, $3); }
+         | arithm_expr GEQ arithm_expr { $$ = new AST(Value(), 'geq', $1, $3); }
+         | arithm_expr LEQ arithm_expr { $$ = new AST(Value(), 'leq', $1, $3); }
+         | arithm_expr EQ arithm_expr { $$ = new AST(Value(), 'eq', $1, $3); }
+         | arithm_expr NEQ arithm_expr { $$ = new AST(Value(), 'neq', $1, $3); }
          ;
 
 

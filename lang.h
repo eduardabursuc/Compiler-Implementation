@@ -69,6 +69,19 @@ public:
     int intVal;
     float floatVal ;
     bool boolVal ;
+    Value();
+    Value(char* value, string type) {
+        
+        if( type == "int" ){
+            this->intVal = atoi(value);
+        } else if ( type == "float" ) {
+            this->floatVal = atoi(value);
+        } else if ( type == "bool" ) {
+            this->boolVal = value;
+        }
+        
+        this->type = type;
+    }
 };
 
 class AST {
@@ -133,6 +146,8 @@ class AST {
                     result.boolVal = leftResult.boolVal || rightResult.boolVal;
                 } else if (root == "and") {
                     result.boolVal = leftResult.boolVal && rightResult.boolVal;
+                } else if (root == "not") {
+                    result.boolVal = !leftResult.boolVal;
                 } else if (root == "gt") {
                     result.boolVal = leftResult.boolVal > rightResult.boolVal;
                 } else if (root == "lt") {
