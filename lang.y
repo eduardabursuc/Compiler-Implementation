@@ -28,7 +28,7 @@ void yyerror(const char * s);
      ListParam listParams;
      Info info;
 }
-%type<AST> expression
+
 %token INT FLOAT BOOL CHAR STRING ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS CONST
 %token NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
@@ -46,6 +46,7 @@ void yyerror(const char * s);
 
 %start program
 
+%type <AST> arithm_expr bool_expr 
 %type <funcType> field_functions
 %type <funcType> function_declaration
 %type <varType> field_variables variable_declaration
@@ -220,16 +221,16 @@ expression: arithm_expr
 
  
         
-arithm_expr: arithm_expr '+' arithm_expr { if ( $1->type == $3->type ) $$ = AST('+', ); else { printf("Addition between diffrent type members.\n"); return 1 ; }} 
-           | arithm_expr '-' arithm_expr /*{ if ( $1->type == $3->type ) $$ = $1 - $3; else { printf("Subtraction between diffrent type members.\n"); return 1 ; }} */
-           | arithm_expr '/' arithm_expr /*{ if ( $1->type == $3->type ) $$ = $1 / $3; else { printf("Division between diffrent type members.\n"); return 1 ; }} */
-           | arithm_expr '*' arithm_expr /*{ if ( $1->type == $3->type ) $$ = $1 * $3; else { printf("Multiplication between diffrent type members.\n"); return 1 ; }} */
-           | arithm_expr '%' arithm_expr /*{ if ( $1->type == $3->type && $1->type.compare(string("int")) == 0 ) $$ = $1 % $3; else { printf("Modulo between diffrent type members.\n"); return 1 ; }}*/
+arithm_expr: arithm_expr '+' arithm_expr { if ( $1->type == $3->type ) $$ = new AST(Value(), '+', $1, $3); else { printf("Addition between diffrent type members.\n"); return 1 ; }} 
+           | arithm_expr '-' arithm_expr { if ( $1->type == $3->type ) $$ = new AST(Value(), '-', $1, $3);  else { printf("Subtraction between diffrent type members.\n"); return 1 ; }} 
+           | arithm_expr '/' arithm_expr { if ( $1->type == $3->type ) $$ = new AST(Value(), '/', $1, $3);  else { printf("Division between diffrent type members.\n"); return 1 ; }} 
+           | arithm_expr '*' arithm_expr { if ( $1->type == $3->type ) $$ = new AST(Value(), '*', $1, $3);  else { printf("Multiplication between diffrent type members.\n"); return 1 ; }} 
+           | arithm_expr '%' arithm_expr { if ( $1->type == $3->type && $1->type.compare(string("int")) == 0 ) $$ = new AST(Value(), '%', $1, $3);  else { printf("Modulo between diffrent type members.\n"); return 1 ; }}
            | '(' arithm_expr ')' 
-           | INT /*{ $$ += $1.value.ToType("int"); }*/
-           | FLOAT /*{ $$ += $1.value.ToType("float"); }*/
+           | INT { $$ = new AST(new Value($1, "int"), '', NULL, NULL); }
+           | FLOAT { $$ = new AST(new Value($1, "float"), '', NULL, NULL); }
            | fn_call 
-           | ID /* { if( !ids.existsVar($1) ) {
+           | ID /*{ if( !ids.existsVar($1) ) {
            		printf("Undeclared variable.\n");
            	   } else {
            	   	
