@@ -62,6 +62,14 @@ public:
 
     Variable(const std::string &name, const Value &val, bool isFunc = false, bool isClass = false)
         : name(name), val(val), isFunc(isFunc), isClass(isClass) {}
+
+    Value Eval() {
+        return this->val;
+    }
+
+    string TypeOf() {
+        return this->val.type;
+    }
 };
 
 class IdList
@@ -127,160 +135,114 @@ public:
     ~IdList() {}
 };
 
-class AST
-{
+
+class AST {
+
+public:
     string type = "";
     Value val;
     string root;
-    AST *left;
-    AST *right;
+    AST* left;
+    AST* right;
 
-    AST(Value val, string root, AST *left, AST *right)
-    {
-        this->val = val;
-        this->root = root;
-        this->left = left;
-        this->right = right;
-    }
 
-    Value Eval()
-    {
+    AST(AST* left, string root, AST* right) : root(root), left(left), right(right) {}
 
-        if (root.empty())
-        {
-            return val;
-        }
-        else if (left->TypeOf().compare(right->TypeOf()) == 0)
-        {
+    AST(Value* val) : val(*val) {}
+
+    Value Eval(){
+
+        if (root.empty()) {
+            return val; 
+        } else if ( left->TypeOf().compare(right->TypeOf()) == 0 ){
 
             Value leftResult = left->Eval();
             Value rightResult = right->Eval();
             Value result;
 
-            if (left->type.compare("int") == 0)
-            {
+
+            if (left->type.compare("int") == 0 ) {
 
                 result.type = "int";
 
-                if (root == "+")
-                {
+                if (root == "+"){
                     result.intVal = leftResult.intVal + rightResult.intVal;
-                }
-                else if (root == "-")
-                {
+                } else if (root == "-") {
                     result.intVal = leftResult.intVal - rightResult.intVal;
-                }
-                else if (root == "*")
-                {
+                } else if (root == "*") {
                     result.intVal = leftResult.intVal * rightResult.intVal;
-                }
-                else if (root == "/")
-                {
+                } else if (root == "/") {
                     result.intVal = leftResult.intVal / rightResult.intVal;
-                }
-                else if (root == "%")
-                {
+                } else if (root == "%") {
                     result.intVal = leftResult.intVal % rightResult.intVal;
-                }
-            }
-            else if (left->type.compare("float") == 0)
-            {
+                }         
+            } else if (left->type.compare("float") == 0 ) {
 
                 result.type = "float";
 
-                if (root == "+")
-                {
+                if (root == "+"){
                     result.floatVal = leftResult.floatVal + rightResult.floatVal;
-                }
-                else if (root == "-")
-                {
+                } else if (root == "-") {
                     result.floatVal = leftResult.floatVal - rightResult.floatVal;
-                }
-                else if (root == "*")
-                {
+                } else if (root == "*") {
                     result.floatVal = leftResult.floatVal * rightResult.floatVal;
-                }
-                else if (root == "/")
-                {
+                } else if (root == "/") {
                     result.floatVal = leftResult.floatVal / rightResult.floatVal;
-                }
-            }
-            else if (left->type.compare("bool") == 0)
-            {
+                } 
+            } else if (left->type.compare("bool") == 0 ) {
 
                 result.type = "bool";
 
-                if (root == "or")
-                {
+                if (root == "or") {
                     result.boolVal = leftResult.boolVal || rightResult.boolVal;
-                }
-                else if (root == "and")
-                {
+                } else if (root == "and") {
                     result.boolVal = leftResult.boolVal && rightResult.boolVal;
-                }
-                else if (root == "not")
-                {
+                } else if (root == "not") {
                     result.boolVal = !leftResult.boolVal;
-                }
-                else if (root == "gt")
-                {
+                } else if (root == "gt") {
                     result.boolVal = leftResult.boolVal > rightResult.boolVal;
-                }
-                else if (root == "lt")
-                {
+                } else if (root == "lt") {
                     result.boolVal = leftResult.boolVal < rightResult.boolVal;
-                }
-                else if (root == "geq")
-                {
+                } else if (root == "geq") {
                     result.boolVal = leftResult.boolVal >= rightResult.boolVal;
-                }
-                else if (root == "leq")
-                {
+                } else if (root == "leq") {
                     result.boolVal = leftResult.boolVal <= rightResult.boolVal;
-                }
-                else if (root == "eq")
-                {
+                } else if (root == "eq") {
                     result.boolVal = leftResult.boolVal == rightResult.boolVal;
-                }
-                else if (root == "neq")
-                {
+                } else if (root == "neq") {
                     result.boolVal = leftResult.boolVal != rightResult.boolVal;
                 }
             }
 
             return result;
+
         }
+
+
     }
+    
+    string TypeOf() {
+    if (!root.empty()) {
+        if (left && right) {
+            string leftType = left->TypeOf();
+            string rightType = right->TypeOf();
 
-    string TypeOf()
-    {
-        if (!root.empty())
-        {
-            if (left && right)
-            {
-                string leftType = left->TypeOf();
-                string rightType = right->TypeOf();
-
-                if (!leftType.empty() && !rightType.empty())
-                {
-                    if (leftType == rightType)
-                    {
-                        type = leftType;
-                        return leftType;
-                    }
-                    else
-                    {
-                        cout << "Different types: operation " << root << " between " << leftType << " and " << rightType << endl;
-                        return "Error";
-                    }
+            if (!leftType.empty() && !rightType.empty()) {
+                if (leftType == rightType) {
+                    this->type = leftType;
+                    return leftType;
+                } else {
+                    cout << "Different types: operation " << this->root << " between " << leftType << " and " << rightType << endl;
+                    return "Error";
                 }
             }
-            else
-            {
-                return type;
-            }
+        } else {
+            return type;
         }
-
-        return type;
     }
+
+    return type;
+}
+
 };
+

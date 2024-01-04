@@ -1,5 +1,5 @@
 
-#line 2 "lex.yy.c"
+#line 3 "lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -321,6 +321,8 @@ void yyfree ( void *  );
 	}
 #define YY_AT_BOL() (YY_CURRENT_BUFFER_LVALUE->yy_at_bol)
 
+/* Begin user sect3 */
+
 #define yywrap() (/*CONSTCOND*/1)
 #define YY_SKIP_YYWRAP
 typedef flex_uint8_t YY_CHAR;
@@ -364,7 +366,7 @@ struct yy_trans_info
 static const flex_int16_t yy_accept[141] =
     {   0,
         0,    0,   38,   36,   34,   35,   35,   36,   36,   30,
-       36,   29,   29,   29,   29,   29,   29,   29,   29,   29,
+       30,   29,   29,   29,   29,   29,   29,   29,   29,   29,
        29,   29,   29,   29,   29,   29,   29,   29,   29,   29,
        29,   35,    0,   32,    0,    0,   30,   29,   29,   29,
        29,   29,   29,   29,   29,   29,   29,   29,   29,   29,
@@ -537,8 +539,8 @@ char *yytext;
 #line 2 "lang.l"
 #include <stdio.h>
 #include "lang.tab.h"
-#line 540 "lex.yy.c"
-#line 541 "lex.yy.c"
+#line 543 "lex.yy.c"
+#line 544 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -757,7 +759,7 @@ YY_DECL
 	{
 #line 7 "lang.l"
 
-#line 760 "lex.yy.c"
+#line 763 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -999,10 +1001,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 44 "lang.l"
+#line 45 "lang.l"
 ECHO;
 	YY_BREAK
-#line 1005 "lex.yy.c"
+#line 1008 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2007,4 +2009,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 44 "lang.l"
+#line 45 "lang.l"
+
+

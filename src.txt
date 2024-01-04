@@ -33,6 +33,7 @@ fn string globalFunction(int param) {
 main {
     class MyFirstClass object;
     globalFunction(globalInt);
+    int test = 20 + 6 - globalFunction(globalInt) - object.myVar / object.myFunction();
     return 0;
 }
 EXIT

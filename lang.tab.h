@@ -103,15 +103,16 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 15 "lang.y"
+#line 16 "lang.y"
 
      char* string;
      int integer;
      int boolean;
      char character;
      float floatnum;
+     class AST* ASTNode;
 
-#line 115 "lang.tab.h"
+#line 116 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
