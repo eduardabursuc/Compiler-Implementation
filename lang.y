@@ -4,11 +4,14 @@
 #include "lang.h"
 #include <cstring>
 
+using namespace std;
+
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
 extern int yylex();
 
+vector<Parameter> globalParams;
 class IdList ids;
 
 void yyerror(const char * s);
@@ -20,6 +23,7 @@ void yyerror(const char * s);
      char character;
      float floatnum;
      class AST* ASTNode;
+     class Parameter* param;
 }
 
 %token INT FLOAT BOOL CHAR STRING ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS CONST
@@ -40,6 +44,7 @@ void yyerror(const char * s);
 %start program
 
 %type <ASTNode> arithm_expr bool_expr
+%type <param> parameter
 
 %%
 
@@ -50,11 +55,7 @@ user_defined_types: /* define rules for user defined types */
                   | user_defined_types user_defined_type
                   ;
 
-user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' {
-     Value val("class");
-     Variable var($2, val, false, true);
-     ids.addVar(var);
-}
+user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' {}
                  ;
 
 field_variables: /*empty*/ {}
@@ -65,11 +66,11 @@ field_functions: /*empty*/ { }
                | field_functions function_declaration { }
 	       ;
 
-function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' {
-     Value val("function");
-     Variable var($3, val, true, false);
-     ids.addVar(var);
-} ;
+function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' { 
+                        Function func($3, $2, globalParams);
+                        ids.addFunc(func);
+                        globalParams.clear();
+                    } ;
 	       
 
 global_variables: 
@@ -86,7 +87,7 @@ parameter_list:  {}
                ;
 
 
-parameter: TYPE ID  { } ;
+parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));} ;
 
 variable_declaration: TYPE ID ';' {
                          Value val($1);
@@ -98,11 +99,25 @@ variable_declaration: TYPE ID ';' {
                          Variable var($2, val);
                          ids.addVar(var);
                     } 
-                    | CONST TYPE ID '=' expression ';'  { }
+                    | CONST TYPE ID ';'  { 
+                        Value val($2);
+                        val.isConst = true;
+                        Variable var($3, val);
+                        ids.addVar(var);}
+                    | CONST TYPE ID '=' expression ';'  { 
+                        Value val($2);
+                        val.isConst = true;
+                        Variable var($3, val);
+                        ids.addVar(var);
+                    }
                     ;
 
                                                         
-class_var_declaration: CLASS ID ID ';'
+class_var_declaration: CLASS ID ID ';' {
+                            Value val($2);
+                            Variable var($3, val);
+                            ids.addVar(var);
+                    }
                      | CLASS ID ID '=' ID ';'
                      | CLASS ID ID '=' fn_call ';'
                      ;
@@ -184,31 +199,31 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "+", $3); 
                else 
-                   printf("Different types.");
+                   printf("Different types.\n");
            }
            | arithm_expr '-' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "-", $3); 
                else 
-                   printf("Different types.");
+                   printf("Different types.\n");
            }
            | arithm_expr '/' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "/", $3); 
                else 
-                   printf("Different types.");
+                   printf("Different types.\n");
            }
            | arithm_expr '*' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "*", $3); 
                else 
-                    printf("Different types.");
+                    printf("Different types.\n");
            }
            | arithm_expr '%' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "%", $3); 
                else 
-                    printf("Different types.");
+                    printf("Different types.\n");
            }
            | '(' arithm_expr ')' {}
            | INT {
@@ -246,37 +261,37 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "gt", $3); 
                else 
-                    printf("Different types.");
+                    printf("Different types.\n");
            }
          | arithm_expr LT arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "lt", $3); 
                else 
-                    printf("Different types.");
+                    printf("Different types\n");
            }
          | arithm_expr GEQ arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "geq", $3); 
                else 
-                    printf("Different types.");
+                    printf("Different types.\n");
            }
          | arithm_expr LEQ arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "leq", $3); 
                else 
-                    printf("Different types.");
+                    printf("Different types.\n");
            }
          | arithm_expr EQ arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "eq", $3); 
                else 
-                    printf("Different types.");
+                    printf("Different types.\n");
            }
          | arithm_expr NEQ arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "neq", $3); 
                else 
-                    printf("Different types.");
+                    printf("Different types.\n");
            }
          ;
 
@@ -299,7 +314,7 @@ int main(int argc, char** argv) {
     yyin = fopen(argv[1], "r");
     yyparse();
 
-     ids.printVars();
-
+    ids.printVars();
+    ids.printFuncs();
     return 0;
 }

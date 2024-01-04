@@ -21,7 +21,7 @@ class MySecondClass {
 };
 
 GLOBALVAR
-int globalInt;
+const int globalInt;
 float globalFloat;
 
 GLOBALFUNC
