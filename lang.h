@@ -4,223 +4,283 @@
 
 using namespace std;
 
-class Info {
-public:
-    string type;
-    string val;
-    Info() : type(""), val("") {}
-    Info(const string &type, const string &val) : type(type), val(val) {}
-};
-
-class Vars {
-public:
-    string name;
-    string scope;
-    Info info;
-    Vars() : name(""), scope(""), info() {}
-    Vars(const string &name, const string &scope, const Info &info) : name(name), scope(scope), info(info) {}
-};
-
-class ListParam{
-public:
-    vector<Vars> list;
-    void addVar(const Vars &var)
-    {
-        list.push_back(var);
-    }
-    ListParam() {}
-};
-
-class FunctionInfo {
-public:
-    string name;
-    string type;
-    string scope;
-    ListParam params;
-    FunctionInfo() : name(""), type(""), scope("") {}
-    FunctionInfo(const string &name, const string &type, const string &scope, const ListParam &params): 
-        name(name), type(type), scope(scope), params(params) {}
-};
-
-class IdList {
-    vector<Vars> vars;
-
-public:
-    bool existsVar(const char *s);
-    void addVar(const char * type, const char * name);
-    void printVars();
-    ~IdList();
-};
-
-class ClassInfo
+class Value
 {
-public:
-    string name;
-    vector<Vars> fields;
-    vector<FunctionInfo> methods;
-    ClassInfo() : name("") {}
-    ClassInfo(const string &name, const vector<Vars> &fields, const vector<FunctionInfo> &methods): 
-        name(name), fields(fields), methods(methods) {}
-};
-
-class Value {
 public:
     string type;
     int intVal;
-    float floatVal ;
-    bool boolVal ;
-    Value();
-    Value(char* value, string type) {
-        
-        if( type == "int" ){
+    float floatVal;
+    bool boolVal;
+    char charVal;
+    string stringVal;
+    bool isIntSet, isFloatSet, isBoolSet, isCharSet, isStringSet, isConst = false;
+
+    Value() : isIntSet(false), isFloatSet(false), isBoolSet(false), isCharSet(false), isStringSet(false) {}
+
+    Value(string type) : type(type), isIntSet(false), isFloatSet(false), isBoolSet(false), isCharSet(false), isStringSet(false) {}
+
+    Value(char *value, string type)
+    {
+
+        if (type == "int")
+        {
             this->intVal = atoi(value);
-        } else if ( type == "float" ) {
-            this->floatVal = atoi(value);
-        } else if ( type == "bool" ) {
-            this->boolVal = value;
+            isIntSet = true;
         }
-        
+        else if (type == "float")
+        {
+            this->floatVal = atof(value);
+            isFloatSet = true;
+        }
+        else if (type == "bool")
+        {
+            boolVal = (string(value) == "true");
+            isBoolSet = true;
+        }
+        else if (type == "char")
+        {
+            this->charVal = value[0];
+            isCharSet = true;
+        }
+        else if (type == "string")
+        {
+            this->stringVal = value;
+            isStringSet = true;
+        }
+
         this->type = type;
     }
 };
 
-class AST {
+class Variable
+{
+public:
+    std::string name;
+    Value val;
+    bool isFunc;
+    bool isClass;
+
+    Variable(const std::string &name, const Value &val, bool isFunc = false, bool isClass = false)
+        : name(name), val(val), isFunc(isFunc), isClass(isClass) {}
+};
+
+class IdList
+{
+    std::vector<Variable> vars;
+
+public:
+    bool existsVar(const char *name)
+    {
+        for (const auto &var : vars)
+            if (var.name == name)
+                return true;
+        return false;
+    }
+
+    void addVar(const Variable &var)
+    {
+        if (!existsVar(var.name.c_str()))
+            vars.push_back(var);
+    }
+
+    void printVars()
+    {
+        if (vars.empty())
+        {
+            std::cout << "No variables to display." << std::endl;
+            return;
+        }
+
+        std::cout << "Variables List:" << std::endl;
+        for (const auto &var : vars)
+        {
+            std::cout << "Name: " << var.name << ", Type: " << var.val.type;
+
+            if (var.val.isIntSet)
+                std::cout << ", Int Value: " << var.val.intVal;
+            if (var.val.isFloatSet)
+                std::cout << ", Float Value: " << var.val.floatVal;
+            if (var.val.isBoolSet)
+                std::cout << ", Bool Value: " << (var.val.boolVal ? "true" : "false");
+            if (var.val.isCharSet)
+                std::cout << ", Char Value: " << var.val.charVal;
+            if (var.val.isStringSet)
+                std::cout << ", String Value: " << var.val.stringVal;
+
+            if (var.isFunc)
+                std::cout << " [Function]";
+            else if (var.isClass)
+                std::cout << " [Class]";
+            else
+                std::cout << " [Variable]";
+
+            std::cout << " Const?:";
+            if (var.val.isConst)
+                std::cout << " [Const]";
+            else
+                std::cout << " [Not Const]";
+
+            std::cout << std::endl;
+        }
+    }
+
+    ~IdList() {}
+};
+
+class AST
+{
     string type = "";
     Value val;
     string root;
-    AST* left;
-    AST* right;
+    AST *left;
+    AST *right;
 
-
-    AST(Value val, string root, AST* left, AST* right){
+    AST(Value val, string root, AST *left, AST *right)
+    {
         this->val = val;
         this->root = root;
         this->left = left;
         this->right = right;
     }
 
-    Value Eval(){
+    Value Eval()
+    {
 
-        if (root.empty()) {
-            return val; 
-        } else if ( left->TypeOf().compare(right->TypeOf()) == 0 ){
+        if (root.empty())
+        {
+            return val;
+        }
+        else if (left->TypeOf().compare(right->TypeOf()) == 0)
+        {
 
             Value leftResult = left->Eval();
             Value rightResult = right->Eval();
             Value result;
 
-
-            if (left->type.compare("int") == 0 ) {
+            if (left->type.compare("int") == 0)
+            {
 
                 result.type = "int";
 
-                if (root == "+"){
+                if (root == "+")
+                {
                     result.intVal = leftResult.intVal + rightResult.intVal;
-                } else if (root == "-") {
+                }
+                else if (root == "-")
+                {
                     result.intVal = leftResult.intVal - rightResult.intVal;
-                } else if (root == "*") {
+                }
+                else if (root == "*")
+                {
                     result.intVal = leftResult.intVal * rightResult.intVal;
-                } else if (root == "/") {
+                }
+                else if (root == "/")
+                {
                     result.intVal = leftResult.intVal / rightResult.intVal;
-                } else if (root == "%") {
+                }
+                else if (root == "%")
+                {
                     result.intVal = leftResult.intVal % rightResult.intVal;
-                }         
-            } else if (left->type.compare("float") == 0 ) {
+                }
+            }
+            else if (left->type.compare("float") == 0)
+            {
 
                 result.type = "float";
 
-                if (root == "+"){
+                if (root == "+")
+                {
                     result.floatVal = leftResult.floatVal + rightResult.floatVal;
-                } else if (root == "-") {
+                }
+                else if (root == "-")
+                {
                     result.floatVal = leftResult.floatVal - rightResult.floatVal;
-                } else if (root == "*") {
+                }
+                else if (root == "*")
+                {
                     result.floatVal = leftResult.floatVal * rightResult.floatVal;
-                } else if (root == "/") {
+                }
+                else if (root == "/")
+                {
                     result.floatVal = leftResult.floatVal / rightResult.floatVal;
-                } 
-            } else if (left->type.compare("bool") == 0 ) {
+                }
+            }
+            else if (left->type.compare("bool") == 0)
+            {
 
                 result.type = "bool";
 
-                if (root == "or") {
+                if (root == "or")
+                {
                     result.boolVal = leftResult.boolVal || rightResult.boolVal;
-                } else if (root == "and") {
+                }
+                else if (root == "and")
+                {
                     result.boolVal = leftResult.boolVal && rightResult.boolVal;
-                } else if (root == "not") {
+                }
+                else if (root == "not")
+                {
                     result.boolVal = !leftResult.boolVal;
-                } else if (root == "gt") {
+                }
+                else if (root == "gt")
+                {
                     result.boolVal = leftResult.boolVal > rightResult.boolVal;
-                } else if (root == "lt") {
+                }
+                else if (root == "lt")
+                {
                     result.boolVal = leftResult.boolVal < rightResult.boolVal;
-                } else if (root == "geq") {
+                }
+                else if (root == "geq")
+                {
                     result.boolVal = leftResult.boolVal >= rightResult.boolVal;
-                } else if (root == "leq") {
+                }
+                else if (root == "leq")
+                {
                     result.boolVal = leftResult.boolVal <= rightResult.boolVal;
-                } else if (root == "eq") {
+                }
+                else if (root == "eq")
+                {
                     result.boolVal = leftResult.boolVal == rightResult.boolVal;
-                } else if (root == "neq") {
+                }
+                else if (root == "neq")
+                {
                     result.boolVal = leftResult.boolVal != rightResult.boolVal;
                 }
             }
 
             return result;
-
         }
-
-
     }
-    
-    string TypeOf() {
-    if (!root.empty()) {
-        if (left && right) {
-            string leftType = left->TypeOf();
-            string rightType = right->TypeOf();
 
-            if (!leftType.empty() && !rightType.empty()) {
-                if (leftType == rightType) {
-                    type = leftType;
-                    return leftType;
-                } else {
-                    cout << "Different types: operation " << root << " between " << leftType << " and " << rightType << endl;
-                    return "Error";
+    string TypeOf()
+    {
+        if (!root.empty())
+        {
+            if (left && right)
+            {
+                string leftType = left->TypeOf();
+                string rightType = right->TypeOf();
+
+                if (!leftType.empty() && !rightType.empty())
+                {
+                    if (leftType == rightType)
+                    {
+                        type = leftType;
+                        return leftType;
+                    }
+                    else
+                    {
+                        cout << "Different types: operation " << root << " between " << leftType << " and " << rightType << endl;
+                        return "Error";
+                    }
                 }
             }
-        } else {
-            return type;
+            else
+            {
+                return type;
+            }
         }
+
+        return type;
     }
-
-    return type;
-}
-
 };
-
-bool IdList::existsVar(const char *s) {
-    string strvar = string(s);
-    for (const Vars &v : vars) {
-        if (strvar == v.name) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void IdList::addVar(const char *type, const char *name)
-{
-    Vars var;
-    var.name = string(name);
-    var.info.type = string(type);
-    vars.push_back(var);
-}
-
-void IdList::printVars()
-{
-    for (const Vars &v : vars)
-    {
-        cout << "name: " << v.name << ", type: " << v.info.type << ", value: " << v.info.val << endl;
-    }
-}
-
-IdList::~IdList() {
-    vars.clear();
-}

@@ -10,9 +10,9 @@
 "USRDEF" { return USRDEF; }
 "GLOBALVAR" { return GLOBALVAR; }
 "GLOBALFUNC" { return GLOBALFUNC; }
-"master" { return MAIN; }
+"main" { return MAIN; }
 "fn" { return FNENTRY; }
-"ret" { return RETURN; }
+"return" { return RETURN; }
 "if" { return IF; }
 "else" { return ELSE; }
 "while" { return WHILE; }
@@ -30,6 +30,7 @@
 "false" { yylval.boolean = 0; return BOOL; }
 "break" { return BREAK; }
 "print" { return PRINT; }
+"const" { return CONST; }
 "int"|"float"|"char"|"string"|"bool" {yylval.string = strdup(yytext);return TYPE;}
 "class" {yylval.string = strdup(yytext); return CLASS;}
 [a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}

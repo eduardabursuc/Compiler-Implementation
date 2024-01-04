@@ -1,14 +1,38 @@
 ENTRY
 USRDEF
-GLOBALVAR
+class MyFirstClass {
+    int myVar;
+    float myFloatVar;
 
-int count;
-string message = "hello";
+    fn int myFunction() {
+        int var1;
+        return var1;
+    }
+};
+
+class MySecondClass {
+    bool myBoolVar;
+    const int myConstVar = 10;
+    fn int computeValue(int param) {
+        int a;
+        a = 20;
+        return a;    
+    }
+};
+
+GLOBALVAR
+int globalInt;
+float globalFloat;
 
 GLOBALFUNC
+fn string globalFunction(int param) {
+    string name;
+    return name;
+}
 
-master{
-    count = 10;
-    message = "Hello, World!";
+main {
+    class MyFirstClass object;
+    globalFunction(globalInt);
+    return 0;
 }
 EXIT
