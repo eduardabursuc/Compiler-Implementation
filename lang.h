@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -77,6 +78,7 @@ class Parameter
 public:
     string name;
     string type;
+    bool isConst = false;
     Parameter(const string &name, const string &type)
         : name(name), type(type) {}
 };
@@ -91,10 +93,19 @@ public:
         : name(name), returnType(returnType), params(params) {}
 };
 
+class UserDefinedType
+{
+public:
+    string name;
+    UserDefinedType(const string &name)
+        : name(name) {}
+};
+
 class IdList
 {
     vector<Variable> vars;
     vector<Function> funcs;
+    vector<UserDefinedType> usrdefs;
 
 public:
     bool exists(const char *name)
@@ -105,6 +116,10 @@ public:
 
         for (const auto &func : funcs)
             if (func.name == name)
+                return true;
+
+        for (const auto &usrdef : usrdefs)
+            if (usrdef.name == name)
                 return true;
         return false;
     }
@@ -119,6 +134,12 @@ public:
     {
         if (!exists(func.name.c_str()))
             funcs.push_back(func);
+    }
+
+    void addUsrDef(const UserDefinedType &usrdef)
+    {
+        if (!exists(usrdef.name.c_str()))
+            usrdefs.push_back(usrdef);
     }
 
     void printVars()
@@ -172,11 +193,68 @@ public:
                 std::cout << "\tParameters: " << std::endl;
                 for (const auto &param : func.params)
                 {
-                    std::cout << "\t\tName: " << param.name << ", Type: " << param.type << std::endl;
+                    std::cout << "\t\tName: " << param.name << ", Type: " << param.type;
                 }
+                std::cout << ", Const?: ";
+                if (func.params.back().isConst)
+                    std::cout << "[Const]";
+                else
+                    std::cout << "[Not Const]";
+                std::cout << std::endl;
             }
         }
     }
+
+    void printUsrDefs()
+    {
+        if (usrdefs.empty())
+        {
+            std::cout << "No user defined types to display." << std::endl;
+            return;
+        }
+
+        std::cout << "User Defined Types List:" << std::endl;
+        for (const auto &usrdef : usrdefs)
+        {
+            std::cout << "Name: " << usrdef.name << std::endl;
+        }
+    }
+
+    void exportToFile(std::string fileName)
+    {
+        std::ofstream file(fileName);
+        if (file.is_open())
+        {
+            file << "Variables List:\n";
+            for (const auto &var : vars)
+            {
+                file << "Name: " << var.name << ", Type: " << var.val.type << ", Const?: [" << (var.val.isConst ? "Const" : "Not Const") << "]\n";
+            }
+
+            file << "\nFunctions List:\n";
+            for (const auto &func : funcs)
+            {
+                file << "Name: " << func.name << ", Return Type: " << func.returnType << "\n\tParameters:\n";
+                for (const auto &param : func.params)
+                {
+                    file << "\t\tName: " << param.name << ", Type: " << param.type << ", Const?: [" << (param.isConst ? "Const" : "Not Const") << "]\n";
+                }
+            }
+
+            file << "\nUser Defined Types List:\n";
+            for (const auto &typeName : usrdefs)
+            {
+                file << "Name: " << typeName.name << "\n";
+            }
+
+            file.close();
+        }
+        else
+        {
+            std::cerr << "Unable to open file for writing.\n";
+        }
+    }
+
     ~IdList() {}
 };
 

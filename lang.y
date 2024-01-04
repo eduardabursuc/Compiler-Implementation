@@ -55,7 +55,10 @@ user_defined_types: /* define rules for user defined types */
                   | user_defined_types user_defined_type
                   ;
 
-user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' {}
+user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' {
+                        UserDefinedType type($2);
+                        ids.addUsrDef(type);
+}
                  ;
 
 field_variables: /*empty*/ {}
@@ -87,7 +90,12 @@ parameter_list:  {}
                ;
 
 
-parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));} ;
+parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));} 
+         | CONST TYPE ID { 
+            Parameter param($3, $2);
+            param.isConst = true; 
+            globalParams.push_back(param);
+        };
 
 variable_declaration: TYPE ID ';' {
                          Value val($1);
@@ -118,8 +126,18 @@ class_var_declaration: CLASS ID ID ';' {
                             Variable var($3, val);
                             ids.addVar(var);
                     }
-                     | CLASS ID ID '=' ID ';'
-                     | CLASS ID ID '=' fn_call ';'
+                     | CLASS ID ID '=' ID ';' {
+                            //check if they have same type
+                            Value val($2);
+                            Variable var($3, val);
+                            ids.addVar(var);    
+                     }
+                     | CLASS ID ID '=' fn_call ';' {
+                        //check if they have same type
+                            Value val($2);
+                            Variable var($3, val);
+                            ids.addVar(var);
+                     }
                      ;
                      
 array_declaration: TYPE ID '[' INT ']' ';' 
@@ -316,5 +334,7 @@ int main(int argc, char** argv) {
 
     ids.printVars();
     ids.printFuncs();
+    ids.printUsrDefs();
+    ids.exportToFile("symbol_table.txt");
     return 0;
 }

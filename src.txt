@@ -25,7 +25,7 @@ const int globalInt;
 float globalFloat;
 
 GLOBALFUNC
-fn string globalFunction(int param) {
+fn string globalFunction(const int param) {
     string name;
     return name;
 }
