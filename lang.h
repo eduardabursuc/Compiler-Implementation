@@ -124,6 +124,24 @@ public:
         return false;
     }
 
+    Variable& getVar(const char *name) {
+        for (auto &var : vars)
+            if (var.name == name)
+                return var;
+    }
+
+    Function& getFunc(const char *name) {
+        for (auto &func : funcs)
+            if (func.name == name)
+                return func;
+    }
+
+    UserDefinedType& getUDT(const char *name) {
+        for (auto &udt : usrdefs)
+            if (udt.name == name)
+                return udt;
+    }
+
     void addVar(const Variable &var)
     {
         if (!exists(var.name.c_str()))
@@ -272,6 +290,8 @@ public:
 
     AST(Value *val) : val(*val) {}
 
+    AST(Value val) : val(val) {}
+
     Value Eval()
     {
 
@@ -378,6 +398,8 @@ public:
             }
 
             return result;
+        } else {
+            return val;
         }
     }
 

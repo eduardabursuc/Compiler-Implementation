@@ -43,7 +43,7 @@ void yyerror(const char * s);
 
 %start program
 
-%type <ASTNode> arithm_expr bool_expr
+%type <ASTNode> arithm_expr bool_expr expression STRING CHAR
 %type <param> parameter
 
 %%
@@ -97,15 +97,31 @@ parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));}
             globalParams.push_back(param);
         };
 
+//trebuie de verificat daca ID-ul deja exista pentru eroare
 variable_declaration: TYPE ID ';' {
                          Value val($1);
                          Variable var($2, val);
                          ids.addVar(var);
                     }
                     | TYPE ID '=' expression ';' {
-                         Value val($1);
-                         Variable var($2, val);
-                         ids.addVar(var);
+                        if ($1 == $4->TypeOf()) {
+                            Value val($1);
+                            if(val.type == "int") {
+                                val.intVal = $4->Eval().intVal;
+                            } else if (val.type == "float") {
+                                val.floatVal = $4->Eval().floatVal;
+                            } else if (val.type == "bool") {
+                                val.boolVal = $4->Eval().boolVal;
+                            } else if (val.type == "char") {
+                                val.charVal = $4->Eval().charVal;
+                            } else if (val.type == "string") {
+                                val.stringVal = $4->Eval().stringVal;
+                            }           
+                            Variable var($2, val);
+                            ids.addVar(var);
+                        } else {
+                            printf("Different types.");
+                        }
                     } 
                     | CONST TYPE ID ';'  { 
                         Value val($2);
@@ -113,10 +129,26 @@ variable_declaration: TYPE ID ';' {
                         Variable var($3, val);
                         ids.addVar(var);}
                     | CONST TYPE ID '=' expression ';'  { 
-                        Value val($2);
-                        val.isConst = true;
-                        Variable var($3, val);
-                        ids.addVar(var);
+                        if ($2 == $5->TypeOf()) {
+                            Value val($2);
+                            val.isConst = true;
+                            if(val.type == "int") {
+                                val.intVal = $5->Eval().intVal;
+                            } else if (val.type == "float") {
+                                val.floatVal = $5->Eval().floatVal;
+                            } else if (val.type == "bool") {
+                                val.boolVal = $5->Eval().boolVal;
+                            } else if (val.type == "char") {
+                                val.charVal = $5->Eval().charVal;
+                            } else if (val.type == "string") {
+                                val.stringVal = $5->Eval().stringVal;
+                            }           
+                            Variable var($3, val);
+                            ids.addVar(var);
+                        } else {
+                            printf("Different types.");
+                        }
+                        
                     }
                     ;
 
@@ -252,11 +284,21 @@ arithm_expr: arithm_expr '+' arithm_expr {
                char* identifierText = strdup(yytext);
                $$ = new AST(new Value(identifierText, "float")); 
            }
-           | fn_call { }
-           | ID {
-
+           | fn_call { 
+                
            }
-           | ID '.' ID { } /* class variable  */
+           | ID {
+                char* identifierText = strdup(yytext);
+                if( ids.exists(identifierText) ) {
+                    Value val = ids.getVar(identifierText).Eval();
+                    $$= new AST(val);
+                } else {
+                    printf("Variable not found.");
+                    return 1;
+                }
+           }
+           | ID '.' ID { 
+           }
            | ID '.' fn_call {}/* class methos */
            | ID '[' ID ']' {}/* array type a[index] */
            | ID '[' INT ']' {}/* array type a[7] */
