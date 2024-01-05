@@ -24,13 +24,15 @@ void yyerror(const char * s);
      float floatnum;
      class AST* ASTNode;
      class Parameter* param;
+     class Variable* var;
 }
 
-%token INT FLOAT BOOL CHAR STRING ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS CONST
+%token ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS CONST
 %token NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
 %token ENTRY EXIT MAIN FNENTRY FNEXIT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC RETURN PRINT
-%token<string> ID TYPE EVAL TYPEOF
+%token<string> ID TYPE EVAL TYPEOF INT FLOAT BOOL CHAR STRING
+
 
 %left OR 
 %left AND
@@ -43,8 +45,10 @@ void yyerror(const char * s);
 
 %start program
 
-%type <ASTNode> arithm_expr bool_expr expression STRING CHAR
+%type <ASTNode> arithm_expr bool_expr expression
 %type <param> parameter
+%type <var> fn_call
+%type <string> one_type_values int_values float_values bool_values char_values
 
 %%
 
@@ -95,15 +99,55 @@ parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));}
             Parameter param($3, $2);
             param.isConst = true; 
             globalParams.push_back(param);
-        };
+        }
+        ;
 
-//trebuie de verificat daca ID-ul deja exista pentru eroare
 variable_declaration: TYPE ID ';' {
-                         Value val($1);
-                         Variable var($2, val);
-                         ids.addVar(var);
+                        if( ids.exists($2) ){
+                            printf("Variable already exists.");
+                            return 1;
+                        } else {
+                            Value val($1);
+                            Variable var($2, val);
+                            ids.addVar(var);
+                        }                        
+                    }
+                    | TYPE ID '=' CHAR ';' {
+                        string type = "char";
+                        if( ids.exists($2) ){
+                            printf("Variable already exists.");
+                            return 1;
+                        } else if ($1 == type){
+                            Value val(type);
+                            val.charVal = *$4;
+                            Variable var($2, val);
+                            ids.addVar(var);
+                            printf("Expr value: %c", val.charVal);
+                        }  else {
+                            printf("Different types.");
+                            return 1;
+                        }                     
+                    }
+                    | TYPE ID '=' STRING ';' {
+                        string type = "string";
+                        if( ids.exists($2) ){
+                            printf("Variable already exists.");
+                            return 1;
+                        } else if ($1 == type){
+                            Value val(type);
+                            val.stringVal = $4;
+                            Variable var($2, val);
+                            ids.addVar(var);
+                        }  else {
+                            printf("Different types.");
+                            return 1;
+                        }                     
                     }
                     | TYPE ID '=' expression ';' {
+                        if ( ids.exists($2) ){
+                            printf("Variable already exists.");
+                            return 1;
+                        }
                         if ($1 == $4->TypeOf()) {
                             Value val($1);
                             if(val.type == "int") {
@@ -112,11 +156,7 @@ variable_declaration: TYPE ID ';' {
                                 val.floatVal = $4->Eval().floatVal;
                             } else if (val.type == "bool") {
                                 val.boolVal = $4->Eval().boolVal;
-                            } else if (val.type == "char") {
-                                val.charVal = $4->Eval().charVal;
-                            } else if (val.type == "string") {
-                                val.stringVal = $4->Eval().stringVal;
-                            }           
+                            }        
                             Variable var($2, val);
                             ids.addVar(var);
                         } else {
@@ -124,11 +164,21 @@ variable_declaration: TYPE ID ';' {
                         }
                     } 
                     | CONST TYPE ID ';'  { 
-                        Value val($2);
-                        val.isConst = true;
-                        Variable var($3, val);
-                        ids.addVar(var);}
+                        if ( ids.exists($3) ){
+                            printf("Variable already exists.");
+                            return 1;
+                        } else {
+                            Value val($2);
+                            val.isConst = true;
+                            Variable var($3, val);
+                            ids.addVar(var);
+                        }
+                    }
                     | CONST TYPE ID '=' expression ';'  { 
+                        if ( ids.exists($3) ){
+                            printf("Variable already exists.");
+                            return 1;
+                        }
                         if ($2 == $5->TypeOf()) {
                             Value val($2);
                             val.isConst = true;
@@ -138,11 +188,7 @@ variable_declaration: TYPE ID ';' {
                                 val.floatVal = $5->Eval().floatVal;
                             } else if (val.type == "bool") {
                                 val.boolVal = $5->Eval().boolVal;
-                            } else if (val.type == "char") {
-                                val.charVal = $5->Eval().charVal;
-                            } else if (val.type == "string") {
-                                val.stringVal = $5->Eval().stringVal;
-                            }           
+                            } 
                             Variable var($3, val);
                             ids.addVar(var);
                         } else {
@@ -151,6 +197,7 @@ variable_declaration: TYPE ID ';' {
                         
                     }
                     ;
+
 
                                                         
 class_var_declaration: CLASS ID ID ';' {
@@ -172,8 +219,24 @@ class_var_declaration: CLASS ID ID ';' {
                      }
                      ;
                      
-array_declaration: TYPE ID '[' INT ']' ';' 
-                 | TYPE ID '['']' '=' '[' one_type_values ']' ';'
+array_declaration: TYPE ID '[' INT ']' ';' {
+                    if( ids.exists($2) ) {
+                        printf("Array already exists.");
+                        return 1;
+                    } else {
+                        Array arr($2, atoi($4), $1);
+                        ids.addArr(arr);
+                    }
+                 }
+                 | TYPE ID '['']' '=' '[' one_type_values ']' ';' {
+                    if( ids.exists($2) ) {
+                        printf("Array already exists.");
+                        return 1;
+                    } else {
+                        Array arr($2, $1, $7);
+                        ids.addArr(arr);
+                    }
+                 }
                  ;
                  
 one_type_values: int_values
@@ -208,17 +271,24 @@ statement: variable_declaration
          | assignment_statement { /* handle assignment statement */ }
          | control_statement { /* handle control statement */ }
          | fn_call ';' { /* handle function call */ }
-         | RETURN expression ';'
+         | RETURN expr ';' {
+
+         }
          ;
 
-assignment_statement: ID '=' expression ';' {}
+assignment_statement: ID '=' expr ';' {}
                     ;
 
 control_statement: if_statement
-                 | SWITCH expression '{' case_block DEFAULT ':' block '}'
+                 | SWITCH expr '{' case_block DEFAULT ':' block '}'
                  | WHILE bool_expr '{' block '}'
                  | FOR '(' assignment_statement ';' bool_expr ';' assignment_statement ')' '{' block '}'
                  ;
+
+expr: expression
+    | STRING 
+    | CHAR
+    ;
                  
 if_statement: IF bool_expr '{' block '}' ELSE '{' block '}'
             | IF bool_expr '{' block '}' ELSE if_statement
@@ -239,8 +309,6 @@ value: INT
 
 expression: arithm_expr
           | bool_expr
-          | STRING
-          | CHAR
           ;
 
  
@@ -284,21 +352,13 @@ arithm_expr: arithm_expr '+' arithm_expr {
                char* identifierText = strdup(yytext);
                $$ = new AST(new Value(identifierText, "float")); 
            }
-           | fn_call { 
+           | fn_call {
+               //$$ = new AST($1->Eval());
+            }
+           | ID {
                 
            }
-           | ID {
-                char* identifierText = strdup(yytext);
-                if( ids.exists(identifierText) ) {
-                    Value val = ids.getVar(identifierText).Eval();
-                    $$= new AST(val);
-                } else {
-                    printf("Variable not found.");
-                    return 1;
-                }
-           }
-           | ID '.' ID { 
-           }
+           | ID '.' ID { } /* class variable  */
            | ID '.' fn_call {}/* class methos */
            | ID '[' ID ']' {}/* array type a[index] */
            | ID '[' INT ']' {}/* array type a[7] */

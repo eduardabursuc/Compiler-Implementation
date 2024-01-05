@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <cstring>
 
 using namespace std;
 
@@ -101,11 +102,41 @@ public:
         : name(name) {}
 };
 
+class Array
+{
+public:
+    string name;
+    string type;
+    int capacity = 0;
+    vector<Value> vals;
+    Array(const string &name, int capacity, string type): name(name), capacity(capacity), type(type) {}
+    Array(const string &name, string type, const string &value){
+        this->name = name;
+        this->type = type;
+        char* valueCopy = strdup(value.c_str());
+
+        if (valueCopy != nullptr) {
+
+            char* token = strtok(valueCopy, ",");
+
+            while (token != nullptr) {
+                this->vals.push_back(Value(token));
+
+                token = strtok(nullptr, ",");
+            }
+
+            free(valueCopy);
+        }
+    }
+
+};
+
 class IdList
 {
     vector<Variable> vars;
     vector<Function> funcs;
     vector<UserDefinedType> usrdefs;
+    vector<Array> arrays;
 
 public:
     bool exists(const char *name)
@@ -121,7 +152,13 @@ public:
         for (const auto &usrdef : usrdefs)
             if (usrdef.name == name)
                 return true;
+
+        for (const auto &array : arrays)
+            if (array.name == name)
+                return true;
+
         return false;
+
     }
 
     Variable& getVar(const char *name) {
@@ -142,6 +179,12 @@ public:
                 return udt;
     }
 
+    Array& getArray(const char *name) {
+        for (auto &array : arrays)
+            if (array.name == name)
+                return array;
+    }
+
     void addVar(const Variable &var)
     {
         if (!exists(var.name.c_str()))
@@ -158,6 +201,12 @@ public:
     {
         if (!exists(usrdef.name.c_str()))
             usrdefs.push_back(usrdef);
+    }
+
+    void addArr(const Array &array)
+    {
+        if (!exists(array.name.c_str()))
+            arrays.push_back(array);
     }
 
     void printVars()
@@ -428,10 +477,50 @@ public:
             }
             else
             {
-                return type;
+                return "";
             }
         }
 
+        if (val.isIntSet) {
+            type = "int";
+        } else if (val.isFloatSet) {
+            type = "float";
+        } else if (val.isBoolSet) {
+            type = "bool";
+        } else if (val.isCharSet) {
+            type = "char";
+        } else if (val.isStringSet) {
+            type = "string";
+        }
         return type;
     }
+
+    void printAst() {
+
+    if(left != NULL)
+    this->left->printAst();
+
+    // Print current node's data
+    if( !root.empty() ){
+        cout << root << " ";
+    } else {
+        if (val.isIntSet) {
+            cout << val.intVal << " ";
+        } else if (val.isFloatSet) {
+            cout << val.floatVal << " ";
+        } else if (val.isBoolSet) {
+            cout << val.boolVal << " ";
+        } else if (val.isCharSet) {
+            cout << val.charVal << " ";
+        } else if (val.isStringSet) {
+            cout << val.stringVal << " ";
+        }
+    }
+
+    if(right != NULL)
+    this->right->printAst();
+
+
+    }
+
 };

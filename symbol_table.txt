@@ -9,7 +9,6 @@ Name: globalInt, Type: int, Const?: [Const]
 Name: globalFloat, Type: float, Const?: [Not Const]
 Name: name, Type: string, Const?: [Not Const]
 Name: object, Type: MyFirstClass, Const?: [Not Const]
-Name: test, Type: int, Const?: [Not Const]
 
 Functions List:
 Name: myFunction, Return Type: int

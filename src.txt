@@ -15,7 +15,7 @@ class MySecondClass {
     const int myConstVar = 10;
     fn int computeValue(int param) {
         int a;
-        a = 20;
+        a = 20 + 4;
         return a;    
     }
 };
