@@ -20,6 +20,7 @@ vector<int> intVals;
 vector<float> floatVals;
 vector<char> charVals;
 vector<bool> boolVals;
+vector<Value> params;
 
 void yyerror(const char * s);
 %}
@@ -77,19 +78,22 @@ user_defined_type: CLASS ID { scope = $2; } '{' field_variables field_functions 
 
 field_variables: /*empty*/ {}
                | field_variables variable_declaration {  }
-               | field_variables array_declaration {  }
-	           ;
+	          ;
 
 field_functions: /*empty*/ { }
                | field_functions function_declaration { }
 	       ;
 
-function_declaration: FNENTRY TYPE ID { altscope = scope; scope = $3; } '(' parameter_list ')' '{' block '}' {
-                    Function func($3, $2, globalParams, altscope); 
-                    ids.addFunc(func); 
-                    globalParams.clear();                                
-                    scope = altscope;
-                    } ;
+function_declaration: FNENTRY TYPE ID  {    altscope = scope; 
+                                            Function func($3, $2, globalParams, altscope); 
+                                            ids.addFunc(func); 
+                                            globalParams.clear();  
+                                            scope = $3; 
+                                        } 
+                        '(' parameter_list ')' '{' block '}' {                                          
+                                            scope = altscope;
+                        } 
+                        ;
 	       
 
 global_variables: 
@@ -113,7 +117,7 @@ parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));}
             Parameter param($3, $2);
             param.isConst = true; 
             globalParams.push_back(param);
-        }
+         }
         ;
 
 variable_declaration: TYPE ID ';' {
@@ -141,7 +145,7 @@ variable_declaration: TYPE ID ';' {
                             ids.addVar(var);
                             printf("Expr value: %c", val.charVal);
                         }  else {
-                            printf("Different types.");
+                            printf("Different types.16");
                             return 1;
                         }                     
                     }
@@ -158,7 +162,7 @@ variable_declaration: TYPE ID ';' {
                             var.scope = scope;
                             ids.addVar(var);
                         }  else {
-                            printf("Different types.");
+                            printf("Different types.15");
                             return 1;
                         }                     
                     }
@@ -167,7 +171,7 @@ variable_declaration: TYPE ID ';' {
                             printf("Variable already exists.");
                             return 1;
                         }
-                        if ($1 == $4->TypeOf()) {
+                        if ($1 == $4->Eval().type) {
                             Value val($1);
                             if(val.type == "int") {
                                 val.isIntSet = true;
@@ -221,7 +225,7 @@ variable_declaration: TYPE ID ';' {
                             var.scope = scope;
                             ids.addVar(var);
                         } else {
-                            printf("Different types.");
+                            printf("Different types.13");
                             return 1;
                         }
                         
@@ -241,7 +245,7 @@ variable_declaration: TYPE ID ';' {
                             var.scope = scope;
                             ids.addVar(var);
                         } else {
-                            printf("Different types.");
+                            printf("Different types.12");
                             return 1;
                         }
                         
@@ -261,7 +265,7 @@ variable_declaration: TYPE ID ';' {
                             var.scope = scope;
                             ids.addVar(var);
                         } else {
-                            printf("Different types.");
+                            printf("Different types.11");
                             return 1;
                         }
                         
@@ -271,24 +275,38 @@ variable_declaration: TYPE ID ';' {
 
                                                         
 class_var_declaration: CLASS ID ID ';' {
-                            Value val($2);
-                            Variable var($3, val);
-                            var.scope = scope;
-                            ids.addVar(var);
+                            if ( ids.exists($3) ) {
+                                printf("Variable %s exists already.", $3);
+                                return 1;
+                            } else {
+                                Value val($2);
+                                Variable var($3, val);
+                                var.scope = scope;
+                                ids.addVar(var);
+                            }
+                            
                      }
-                     | CLASS ID ID '=' ID ';' {
-                            //check if they have same type
-                            Value val($2);
-                            Variable var($3, val);
-                            var.scope = scope;
-                            ids.addVar(var);    
-                     }
-                     | CLASS ID ID '=' fn_call ';' {
-                        //check if they have same type
-                            Value val($2);
-                            Variable var($3, val);
-                            var.scope = scope;
-                            ids.addVar(var);
+                     | CLASS ID ID '=' ID ';' { 
+                            if ( ids.exists($3)) {
+                                printf("Variable %s exists already.", $3);
+                                return 1;
+                            } else {
+                                
+                                if ( !ids.exists($5)) {
+                                printf("No %s variable found.", $5);
+                                return 1;
+                                }
+                                
+                                
+                                if( ids.getVar($5).Eval().type != $2) {
+                                    printf("Different types between %s and %s.\n", $3, $5);
+                                    return 1;
+                                }
+                                Value val($2);
+                                Variable var($3, val);
+                                var.scope = scope;
+                                ids.addVar(var);
+                            }   
                      }
                      ;
                      
@@ -333,6 +351,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             sprintf(val, "%f", element);
                             arr.push(Value(val, "float"));
                         }
+                        
                         arr.scope = scope;
                         ids.addArr(arr);
                         floatVals.clear();
@@ -350,6 +369,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             sprintf(val, "%c", element);
                             arr.push(Value(val, "char"));
                         }
+                        
                         arr.scope = scope;
                         ids.addArr(arr);
                         charVals.clear();
@@ -405,11 +425,49 @@ statement: variable_declaration
          | control_statement 
          | fn_call ';'
          | RETURN expression ';' {
+            if ( scope == "main" ) {
+                if ( $2->Eval().type != "int" ){
+                    printf("Error at returning a non integer in main scope.\n");
+                    return 1;
+                }
 
+            } else {
+                Function fn = ids.getFunc(scope.c_str());
+                if( fn.returnType != $2->Eval().type ){
+                    printf("Different returning types in function: %s.\n", fn.name.c_str());
+                    return 1;
+                } 
+            }
          }
-         | RETURN STRING ';' 
-         | RETURN CHAR ';'
+         | RETURN STRING ';' {
+            if ( scope == "main") {
+                printf("Error at returning a non integer in main scope.\n");
+                return 1;
+            } else {
+                Function fn = ids.getFunc(scope.c_str());
+                string type = "string";
+                if( fn.returnType != type ){
+                    printf("Different returning types in function: %s.\n", fn.name.c_str());
+                    return 1;
+                }
+            }
+         }
+         | RETURN CHAR ';' {
+            if ( scope == "main") {
+                printf("Error at returning a non integer in main scope.\n");
+                return 1;
+            } else {
+                Function fn = ids.getFunc(scope.c_str());
+                string type = "char";
+                if( fn.returnType != type ){
+                    printf("Different returning types in function: %s.\n", fn.name.c_str());
+                    return 1;
+                }
+            }
+         }
          ;
+
+
 
 assignment_statement: ID '=' expression ';' {
                         if( ids.exists($1) ) {
@@ -427,7 +485,7 @@ assignment_statement: ID '=' expression ';' {
                                     var.val.boolVal = result.boolVal;
                                 }
                             } else {
-                                printf("Different types.");
+                                printf("Different types.1");
                                 return 1;
                             }        
                         } else {
@@ -443,7 +501,7 @@ assignment_statement: ID '=' expression ';' {
                                 var.val.isCharSet = true;
                                 var.val.charVal = $3;  
                             } else {
-                                printf("Different types.");
+                                printf("Different types.2");
                                 return 1;
                             }   
 
@@ -460,7 +518,7 @@ assignment_statement: ID '=' expression ';' {
                                 var.val.isStringSet = true;
                                 var.val.stringVal = $3;  
                             } else {
-                                printf("Different types.");
+                                printf("Different types.3");
                                 return 1;
                             }   
 
@@ -478,7 +536,7 @@ assignment_statement: ID '=' expression ';' {
                             if (arr.type == result.type){
                                 arr.add($3, result);
                             } else {
-                                printf("Different types.");
+                                printf("Different types.4");
                                 return 1;
                             }   
 
@@ -497,7 +555,7 @@ assignment_statement: ID '=' expression ';' {
                                 val.type = "char";
                                 arr.add($3, val);
                             } else {
-                                printf("Different types.");
+                                printf("Different types.5");
                                 return 1;
                             }   
 
@@ -535,7 +593,7 @@ assignment_statement: ID '=' expression ';' {
                                 v.type = "char";
                                 arr.add(val.intVal, v);
                             } else {
-                                printf("Different types.");
+                                printf("Different types.7");
                                 return 1;
                             }   
 
@@ -546,7 +604,7 @@ assignment_statement: ID '=' expression ';' {
                     }
                     ;
 
-control_statement: if_statement
+control_statement: if_statement 
                  | SWITCH expression'{' case_block DEFAULT ':' block '}'
                  | SWITCH STRING'{' case_block DEFAULT ':' block '}'
                  | SWITCH CHAR'{' case_block DEFAULT ':' block '}'
@@ -555,7 +613,7 @@ control_statement: if_statement
                  ;
 
                  
-if_statement: IF bool_expr '{' block '}' ELSE '{' block '}'
+if_statement: IF bool_expr '{' block '}' ELSE '{' block '}' 
             | IF bool_expr '{' block '}' ELSE if_statement
             ;
             
@@ -582,8 +640,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "+", $3); 
                else{
-                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());
-                    
+                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
 
@@ -600,10 +657,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "/", $3); 
                else {
-                    printf("Different types between: ");
-                    $1->printAst();
-                    printf(" and ");
-                    $3->printAst();
+                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -611,10 +665,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "*", $3); 
                else {
-                    printf("Different types between: ");
-                    $1->printAst();
-                    printf(" and ");
-                    $3->printAst();
+                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -622,10 +673,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "%", $3); 
                else {
-                    printf("Different types between: ");
-                    $1->printAst();
-                    printf(" and ");
-                    $3->printAst();
+                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
                     
@@ -649,24 +697,51 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     Value val = ids.getVar($1).Eval();
                     $$ = new AST(val);
                 } else {
-                    printf("Variable not found.");
+                    printf("Variable not found.4");
                     return 1;
                 }
            }
            | ID '.' ID { 
                 if( ids.exists($1) ) {
-                    
+                    if( ids.exists($3) ) {
+
+                        Variable var = ids.getVar($3);
+                        Variable obj = ids.getVar($1);
+
+                        if( var.scope == obj.val.type ){
+                            $$ = new AST(var.val);
+                        } else {
+                            printf("No %s member in class %s.", $3, $1);
+                            return 0;
+                        }
+                             
+                    } else {
+                         printf("No %s member in class %s.", $3, $1);
+                         return 0;
+                    }
                 } else {
-                    printf("Variable not found.");
+                    printf("Class %s not found.", $1);
                     return 1;
                 }
            } 
            | ID '.' fn_call {
                 if( ids.exists($1) ) {
                     
+                    Variable obj = ids.getVar($1);
+                    Function fn = ids.getFunc($3->name.c_str());
+
+                        if( obj.val.type == fn.scope ){
+                            $$ = new AST($3->val);
+                        } else {
+                            printf("No %s method found in class variable %s.", $3->name.c_str(), $1);
+                            return 0;
+                        }
+                    
                 } else {
-                    printf("Variable not found.");
+
+                    printf("Variable %s not found.\n", $1);
                     return 1;
+
                 }
            }
            | ID '[' ID ']' {
@@ -679,7 +754,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                         printf("Invalid index.");
                     }
                 } else {
-                    printf("Variable not found.");
+                    printf("Variable not found.2");
                     return 1;
                 }
            }
@@ -688,11 +763,24 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     Array arr = ids.getArray($1);
                     $$ = new AST(arr.getVal($3));
                 }else {
-                    printf("Variable not found.");
+                    printf("Variable not found.1");
                 }
 
            }
-           | ID '[' fn_call ']' {}/* array type a[get_index()] */
+           | ID '[' fn_call ']' {
+                if( ids.exists($1)) {
+                    Array arr = ids.getArray($1);
+
+                    if( $3->val.type == "int" )
+                        $$ = new AST(arr.getVal($3->val.intVal));
+                    else {
+                        printf("Invalid index.");
+                    }
+                } else {
+                    printf("Variable not found.2");
+                    return 1;
+                }
+           }
            ;   
                
       
@@ -716,7 +804,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "gt", $3); 
                else {
-                    printf("Different types.\n");
+                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -724,7 +812,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "lt", $3); 
                else{
-                    printf("Different types.\n");
+                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -732,7 +820,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "geq", $3); 
                else {
-                    printf("Different types.\n");
+                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -740,37 +828,77 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "leq", $3); 
                else {
-                    printf("Different types.\n");
+                    printf("Different types.9\n");
                     return 1;
                }
                     
            }
          | arithm_expr EQ arithm_expr {
-                if ($1->Eval().type == $3->Eval().type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "eq", $3); 
                else {
-                    printf("Different types.\n");
+                    printf("Different types.10\n");
                     return 1;
                }
            }
          | arithm_expr NEQ arithm_expr {
-                if ($1->Eval().type == $3->Eval().type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "neq", $3); 
                else {
-                    printf("Different types.\n");
+                    printf("Different types.11\n");
                     return 1;
                }
            }
          ;
 
 
-fn_call: ID '(' argument_list ')' { /* handle function call */ }
-             ;
+fn_call: ID '(' argument_list ')' { 
+            
+            if( ids.exists($1) ) {
+                Function fn = ids.getFunc($1);
+
+                if ( params.size() != fn.params.size() ){
+                    printf("The %s function call has inapropriate number of parameters.\n", fn.name.c_str());
+                    return 1;
+                } else {
+                    for( int i = 0; i < params.size(); i++ ) {
+                        if (params.at(i).type != fn.params.at(i).type){
+                            printf("The parameter .... should be of type %s.\n", fn.params.at(i).type.c_str());
+                            return 1;
+                        }
+                    }
+                    params.clear();
+
+                    Value result(fn.returnType);
+                    if( result.type == "int" ){
+                        result.intVal = 0;
+                        result.isIntSet = true;
+                    } else if( result.type == "float" ){
+                        result.floatVal = 0.0;
+                        result.isFloatSet = true;
+                    } else if( result.type == "bool" ){
+                        result.boolVal = true;
+                        result.isIntSet = true;
+                    } else if( result.type == "char" ){
+                        result.charVal = '\0';
+                        result.isCharSet = true;
+                    } else if( result.type == "string" ){
+                        result.stringVal = "";
+                        result.isStringSet = true;
+                    }
+                    
+                   
+                    $$ = new Variable(fn.name.c_str(), result);
+
+                }
+            }
+        }
+        ;
 
 
 argument_list: /* define rules for argument list */
-             | expression
-             | argument_list ',' expression
+             | expression { params.push_back($1->Eval());}
+             | argument_list ',' expression { params.push_back($3->Eval());}
              ;
 
 %%
@@ -782,10 +910,10 @@ int main(int argc, char** argv) {
     yyin = fopen(argv[1], "r");
     yyparse();
 
-    /* ids.printVars();
+    ids.printVars();
     ids.printFuncs();
     ids.printUsrDefs();
-    ids.printArrays(); */
+    ids.printArrays();
     ids.exportToFile("symbol_table.txt");
     return 0;
 }
