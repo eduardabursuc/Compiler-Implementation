@@ -15,6 +15,7 @@ extern int yylex();
 vector<Parameter> globalParams;
 class IdList ids;
 string scope = "global";
+string altscope;
 vector<int> intVals;
 vector<float> floatVals;
 vector<char> charVals;
@@ -76,22 +77,24 @@ user_defined_type: CLASS ID { scope = $2; } '{' field_variables field_functions 
 
 field_variables: /*empty*/ {}
                | field_variables variable_declaration {  }
+               | field_variables array_declaration {  }
 	          ;
 
 field_functions: /*empty*/ { }
                | field_functions function_declaration { }
 	       ;
 
-function_declaration: FNENTRY TYPE ID { scope = $3; } '(' parameter_list ')' '{' block '}' { 
-                        Function func($3, $2, globalParams);
+function_declaration: FNENTRY TYPE ID { altscope = scope; scope = $3; } '(' parameter_list ')' '{' block '}' { 
+                        Function func($3, $2, globalParams /*, altscope*/);
                         ids.addFunc(func);
                         globalParams.clear();
-                        scope = "global";
+                        scope = altscope;
                     } ;
 	       
 
 global_variables: 
                   | global_variables variable_declaration
+                  | global_variables array_declaration
                   ;
 
 global_functions: 
@@ -119,6 +122,7 @@ variable_declaration: TYPE ID ';' {
                         } else {
                             Value val($1);
                             Variable var($2, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         }                        
                     }
@@ -132,6 +136,7 @@ variable_declaration: TYPE ID ';' {
                             val.isCharSet = true;
                             val.charVal = $4;
                             Variable var($2, val);
+                            var.scope = scope;
                             ids.addVar(var);
                             printf("Expr value: %c", val.charVal);
                         }  else {
@@ -149,6 +154,7 @@ variable_declaration: TYPE ID ';' {
                             val.isStringSet = true;
                             val.stringVal = $4;
                             Variable var($2, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         }  else {
                             printf("Different types.");
@@ -173,6 +179,7 @@ variable_declaration: TYPE ID ';' {
                                 val.boolVal = $4->Eval().boolVal;
                             }        
                             Variable var($2, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
@@ -187,6 +194,7 @@ variable_declaration: TYPE ID ';' {
                             Value val($2);
                             val.isConst = true;
                             Variable var($3, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         }
                     }
@@ -209,6 +217,7 @@ variable_declaration: TYPE ID ';' {
                                 val.boolVal = $5->Eval().boolVal;
                             } 
                             Variable var($3, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
@@ -245,6 +254,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                         return 1;
                     } else {
                         Array arr($2, $4, $1);
+                        arr.scope = scope;
                         ids.addArr(arr);
                     }
                  }
@@ -262,6 +272,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                         }
 
                         intVals.clear();
+                        arr.scope = scope;
                         ids.addArr(arr);
                         
                     }
@@ -279,6 +290,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             arr.push(Value(val, "float"));
                         }
                         
+                        arr.scope = scope;
                         ids.addArr(arr);
                         floatVals.clear();
                     }
@@ -296,6 +308,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             arr.push(Value(val, "char"));
                         }
                         
+                        arr.scope = scope;
                         ids.addArr(arr);
                         charVals.clear();
                     }
@@ -317,6 +330,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             arr.push(Value(val, "bool"));
                         }
                         
+                        arr.scope = scope;
                         ids.addArr(arr);
                         boolVals.clear();
                     }
