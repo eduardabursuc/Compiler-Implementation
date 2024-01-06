@@ -433,7 +433,7 @@ public:
         {
             return val;
         }
-        else if (left->TypeOf().compare(right->TypeOf()) == 0)
+        else if ( left && right && left->TypeOf().compare(right->TypeOf()) == 0)
         {
 
             Value leftResult = left->Eval();
@@ -470,7 +470,7 @@ public:
                 }
                 else if (root == "lt")
                 {
-                    result.boolVal = leftResult.boolVal < rightResult.boolVal;
+                    result.boolVal = leftResult.intVal < rightResult.intVal;
                 }
                 else if (root == "geq")
                 {
@@ -547,10 +547,6 @@ public:
                 {
                     result.boolVal = leftResult.boolVal && rightResult.boolVal;
                 }
-                else if (root == "not")
-                {
-                    result.boolVal = !leftResult.boolVal;
-                }
                 else if (root == "gt")
                 {
                     result.boolVal = leftResult.boolVal > rightResult.boolVal;
@@ -577,6 +573,12 @@ public:
                 }
             }
 
+            return result;
+
+        } else if (left && root == "not"){
+            Value result;
+            result.isBoolSet = true;
+            result.boolVal = !left->Eval().boolVal;
             return result;
         } else {
             return val;

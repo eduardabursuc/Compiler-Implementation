@@ -90,6 +90,8 @@ function_declaration: FNENTRY TYPE ID {Function func($3, $2, globalParams, scope
 
 global_variables: 
                   | global_variables variable_declaration
+                  | global_variables array_declaration
+                  | class_var_declaration
                   ;
 
 global_functions: 
@@ -107,7 +109,7 @@ parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));}
             Parameter param($3, $2);
             param.isConst = true; 
             globalParams.push_back(param);
-        }
+         }
         ;
 
 variable_declaration: TYPE ID ';' {
@@ -386,7 +388,7 @@ statement: variable_declaration
          | control_statement 
          | fn_call ';'
          | RETURN expression ';' {
-
+            
          }
          | RETURN STRING ';' 
          | RETURN CHAR ';'
@@ -527,7 +529,7 @@ assignment_statement: ID '=' expression ';' {
                     }
                     ;
 
-control_statement: if_statement
+control_statement: if_statement 
                  | SWITCH expression'{' case_block DEFAULT ':' block '}'
                  | SWITCH STRING'{' case_block DEFAULT ':' block '}'
                  | SWITCH CHAR'{' case_block DEFAULT ':' block '}'
@@ -536,7 +538,7 @@ control_statement: if_statement
                  ;
 
                  
-if_statement: IF bool_expr '{' block '}' ELSE '{' block '}'
+if_statement: IF bool_expr '{' block '}' ELSE '{' block '}' 
             | IF bool_expr '{' block '}' ELSE if_statement
             ;
             
@@ -694,7 +696,7 @@ bool_expr: bool_expr AND bool_expr {
             $$ = new AST(new Value(identifierText, "bool"));
           }
          | arithm_expr GT arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "gt", $3); 
                else {
                     printf("Different types.\n");
@@ -702,7 +704,7 @@ bool_expr: bool_expr AND bool_expr {
                }
            }
          | arithm_expr LT arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "lt", $3); 
                else{
                     printf("Different types.\n");
@@ -710,7 +712,7 @@ bool_expr: bool_expr AND bool_expr {
                }
            }
          | arithm_expr GEQ arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "geq", $3); 
                else {
                     printf("Different types.\n");
@@ -718,7 +720,7 @@ bool_expr: bool_expr AND bool_expr {
                }
            }
          | arithm_expr LEQ arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "leq", $3); 
                else {
                     printf("Different types.\n");
@@ -727,7 +729,7 @@ bool_expr: bool_expr AND bool_expr {
                     
            }
          | arithm_expr EQ arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "eq", $3); 
                else {
                     printf("Different types.\n");
@@ -735,7 +737,7 @@ bool_expr: bool_expr AND bool_expr {
                }
            }
          | arithm_expr NEQ arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "neq", $3); 
                else {
                     printf("Different types.\n");

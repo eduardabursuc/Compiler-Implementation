@@ -15,7 +15,7 @@ class MySecondClass {
     const int myConstVar = 10;
     fn bool computeValue(int param) {
         bool a;
-        a = 20 + 5 < 4 - 1;
+        a = not ( 20 / 5 < 4 + 1 + myConstVar );
         return a;    
     }
 };
