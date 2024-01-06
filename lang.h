@@ -100,6 +100,7 @@ public:
     string name;
     UserDefinedType(const string &name)
         : name(name) {}
+
 };
 
 class Array
@@ -128,6 +129,7 @@ public:
             free(valueCopy);
         }
     }
+
 
 };
 
@@ -337,9 +339,33 @@ public:
 
     AST(AST *left, string root, AST *right) : root(root), left(left), right(right) {}
 
-    AST(Value *val) : val(*val) {}
+    AST(Value *val) : val(*val){
+        if (val->isIntSet) {
+            type = "int";
+        } else if (val->isFloatSet) {
+            type = "float";
+        } else if (val->isBoolSet) {
+            type = "bool";
+        } else if (val->isCharSet) {
+            type = "char";
+        } else if (val->isStringSet) {
+            type = "string";
+        }
+    }
 
-    AST(Value val) : val(val) {}
+    AST(Value val) : val(val) {
+        if (val.isIntSet) {
+            type = "int";
+        } else if (val.isFloatSet) {
+            type = "float";
+        } else if (val.isBoolSet) {
+            type = "bool";
+        } else if (val.isCharSet) {
+            type = "char";
+        } else if (val.isStringSet) {
+            type = "string";
+        }
+    }
 
     Value Eval()
     {
@@ -379,6 +405,29 @@ public:
                 else if (root == "%")
                 {
                     result.intVal = leftResult.intVal % rightResult.intVal;
+                } else if (root == "gt")
+                {
+                    result.boolVal = leftResult.intVal > rightResult.intVal;
+                }
+                else if (root == "lt")
+                {
+                    result.boolVal = leftResult.boolVal < rightResult.boolVal;
+                }
+                else if (root == "geq")
+                {
+                    result.boolVal = leftResult.intVal >= rightResult.intVal;
+                }
+                else if (root == "leq")
+                {
+                    result.boolVal = leftResult.intVal <= rightResult.intVal;
+                }
+                else if (root == "eq")
+                {
+                    result.boolVal = leftResult.intVal == rightResult.intVal;
+                }
+                else if (root == "neq")
+                {
+                    result.boolVal = leftResult.intVal != rightResult.intVal;
                 }
             }
             else if (left->type.compare("float") == 0)
@@ -401,6 +450,29 @@ public:
                 else if (root == "/")
                 {
                     result.floatVal = leftResult.floatVal / rightResult.floatVal;
+                } else if (root == "gt")
+                {
+                    result.boolVal = leftResult.floatVal > rightResult.floatVal;
+                }
+                else if (root == "lt")
+                {
+                    result.boolVal = leftResult.floatVal < rightResult.floatVal;
+                }
+                else if (root == "geq")
+                {
+                    result.boolVal = leftResult.floatVal >= rightResult.floatVal;
+                }
+                else if (root == "leq")
+                {
+                    result.boolVal = leftResult.floatVal <= rightResult.floatVal;
+                }
+                else if (root == "eq")
+                {
+                    result.boolVal = leftResult.floatVal == rightResult.floatVal;
+                }
+                else if (root == "neq")
+                {
+                    result.boolVal = leftResult.floatVal != rightResult.floatVal;
                 }
             }
             else if (left->type.compare("bool") == 0)
@@ -481,18 +553,8 @@ public:
             }
         }
 
-        if (val.isIntSet) {
-            type = "int";
-        } else if (val.isFloatSet) {
-            type = "float";
-        } else if (val.isBoolSet) {
-            type = "bool";
-        } else if (val.isCharSet) {
-            type = "char";
-        } else if (val.isStringSet) {
-            type = "string";
-        }
         return type;
+
     }
 
     void printAst() {

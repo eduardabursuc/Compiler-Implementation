@@ -13,6 +13,7 @@ extern int yylex();
 
 vector<Parameter> globalParams;
 class IdList ids;
+string scope = "global";
 
 void yyerror(const char * s);
 %}
@@ -52,16 +53,17 @@ void yyerror(const char * s);
 
 %%
 
-program: ENTRY USRDEF user_defined_types GLOBALVAR global_variables GLOBALFUNC global_functions MAIN '{' block '}' EXIT {printf("Program is correct!\n");}
+program: ENTRY USRDEF user_defined_types GLOBALVAR global_variables GLOBALFUNC global_functions MAIN { scope = "main"; } '{' block '}' EXIT {printf("Program is correct!\n");}
        ;
 
 user_defined_types: /* define rules for user defined types */
                   | user_defined_types user_defined_type
                   ;
 
-user_defined_type: CLASS ID '{' field_variables field_functions '}' ';' {
+user_defined_type: CLASS ID { scope = $2; } '{' field_variables field_functions '}' ';' {
                         UserDefinedType type($2);
                         ids.addUsrDef(type);
+                        scope = "global";
 }
                  ;
 
@@ -73,10 +75,11 @@ field_functions: /*empty*/ { }
                | field_functions function_declaration { }
 	       ;
 
-function_declaration: FNENTRY TYPE ID '(' parameter_list ')' '{' block '}' { 
+function_declaration: FNENTRY TYPE ID { scope = $3; } '(' parameter_list ')' '{' block '}' { 
                         Function func($3, $2, globalParams);
                         ids.addFunc(func);
                         globalParams.clear();
+                        scope = "global";
                     } ;
 	       
 
@@ -161,6 +164,7 @@ variable_declaration: TYPE ID ';' {
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
+                            return 1;
                         }
                     } 
                     | CONST TYPE ID ';'  { 
@@ -193,6 +197,7 @@ variable_declaration: TYPE ID ';' {
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
+                            return 1;
                         }
                         
                     }
@@ -271,24 +276,26 @@ statement: variable_declaration
          | assignment_statement { /* handle assignment statement */ }
          | control_statement { /* handle control statement */ }
          | fn_call ';' { /* handle function call */ }
-         | RETURN expr ';' {
+         | RETURN expression ';' {
 
          }
+         | RETURN STRING ';' 
+         | RETURN CHAR ';'
          ;
 
-assignment_statement: ID '=' expr ';' {}
+assignment_statement: ID '=' expression ';' {}
+                    | ID '=' CHAR ';' {}
+                    | ID '=' STRING ';' {}
                     ;
 
 control_statement: if_statement
-                 | SWITCH expr '{' case_block DEFAULT ':' block '}'
+                 | SWITCH expression'{' case_block DEFAULT ':' block '}'
+                 | SWITCH STRING'{' case_block DEFAULT ':' block '}'
+                 | SWITCH CHAR'{' case_block DEFAULT ':' block '}'
                  | WHILE bool_expr '{' block '}'
                  | FOR '(' assignment_statement ';' bool_expr ';' assignment_statement ')' '{' block '}'
                  ;
 
-expr: expression
-    | STRING 
-    | CHAR
-    ;
                  
 if_statement: IF bool_expr '{' block '}' ELSE '{' block '}'
             | IF bool_expr '{' block '}' ELSE if_statement
@@ -307,8 +314,8 @@ value: INT
      ;
             
 
-expression: arithm_expr
-          | bool_expr
+expression: arithm_expr { $$ = $1; }
+          | bool_expr { $$ = $1; }
           ;
 
  
@@ -318,6 +325,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                    $$ = new AST($1, "+", $3); 
                else 
                    printf("Different types.\n");
+
            }
            | arithm_expr '-' arithm_expr {
                if ($1->type == $3->type)
@@ -353,13 +361,33 @@ arithm_expr: arithm_expr '+' arithm_expr {
                $$ = new AST(new Value(identifierText, "float")); 
            }
            | fn_call {
-               //$$ = new AST($1->Eval());
+               //$$ = new AST($1);
             }
            | ID {
-                
+                if( ids.exists($1) ) {
+                    Value val = ids.getVar($1).Eval();
+                    $$ = new AST(val);
+                } else {
+                    printf("Variable not found.");
+                    return 1;
+                }
            }
-           | ID '.' ID { } /* class variable  */
-           | ID '.' fn_call {}/* class methos */
+           | ID '.' ID { 
+                if( ids.exists($1) ) {
+                    
+                } else {
+                    printf("Variable not found.");
+                    return 1;
+                }
+           } 
+           | ID '.' fn_call {
+                if( ids.exists($1) ) {
+                    
+                } else {
+                    printf("Variable not found.");
+                    return 1;
+                }
+           }
            | ID '[' ID ']' {}/* array type a[index] */
            | ID '[' INT ']' {}/* array type a[7] */
            | ID '[' fn_call ']' {}/* array type a[get_index()] */

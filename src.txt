@@ -13,9 +13,9 @@ class MyFirstClass {
 class MySecondClass {
     bool myBoolVar;
     const int myConstVar = 10;
-    fn int computeValue(int param) {
-        int a;
-        a = 20 + 4;
+    fn bool computeValue(int param) {
+        bool a;
+        a = 20 < 4;
         return a;    
     }
 };
@@ -33,7 +33,7 @@ fn string globalFunction(const int param) {
 main {
     class MyFirstClass object;
     globalFunction(globalInt);
-    int test = 20 + 6 - globalFunction(globalInt) - object.myVar / object.myFunction();
+    int test = 20 + 6 - 20 / 4 + 2 % 1;
     return 0;
 }
 EXIT

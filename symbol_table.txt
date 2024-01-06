@@ -4,16 +4,17 @@ Name: myFloatVar, Type: float, Const?: [Not Const]
 Name: var1, Type: int, Const?: [Not Const]
 Name: myBoolVar, Type: bool, Const?: [Not Const]
 Name: myConstVar, Type: int, Const?: [Const]
-Name: a, Type: int, Const?: [Not Const]
+Name: a, Type: bool, Const?: [Not Const]
 Name: globalInt, Type: int, Const?: [Const]
 Name: globalFloat, Type: float, Const?: [Not Const]
 Name: name, Type: string, Const?: [Not Const]
 Name: object, Type: MyFirstClass, Const?: [Not Const]
+Name: test, Type: int, Const?: [Not Const]
 
 Functions List:
 Name: myFunction, Return Type: int
 	Parameters:
-Name: computeValue, Return Type: int
+Name: computeValue, Return Type: bool
 	Parameters:
 		Name: param, Type: int, Const?: [Not Const]
 Name: globalFunction, Return Type: string
