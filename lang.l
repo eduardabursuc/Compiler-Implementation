@@ -38,8 +38,8 @@
 [a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
 [1-9][0-9]*|0 { yylval.integer = atoi(yytext); return INT; }
 ([1-9][0-9]*|0)\.[0-9]+ { yylval.floatnum = atof(yytext); return FLOAT; }
-\"[^"]*\" { yylval.string = strdup(yytext); return STRING; }
-\'[^']\' { yylval.character = yytext[0]; return CHAR; }
+\"[^"]*\" { yytext = yytext+1; yytext[strlen(yytext) - 1] = '\0'; yylval.string = strdup(yytext); return STRING; }
+\'[^']\' { yylval.character = yytext[1]; return CHAR; }
 [ \t] ;
 (\r|\n|\r\n) {yylineno++;}
 . {return yytext[0];}

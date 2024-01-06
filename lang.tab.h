@@ -89,11 +89,11 @@ extern int yydebug;
     TYPE = 290,                    /* TYPE  */
     EVAL = 291,                    /* EVAL  */
     TYPEOF = 292,                  /* TYPEOF  */
-    INT = 293,                     /* INT  */
-    FLOAT = 294,                   /* FLOAT  */
-    BOOL = 295,                    /* BOOL  */
-    CHAR = 296,                    /* CHAR  */
-    STRING = 297,                  /* STRING  */
+    STRING = 293,                  /* STRING  */
+    INT = 294,                     /* INT  */
+    CHAR = 295,                    /* CHAR  */
+    FLOAT = 296,                   /* FLOAT  */
+    BOOL = 297,                    /* BOOL  */
     EQ = 298                       /* EQ  */
   };
   typedef enum yytokentype yytoken_kind_t;
@@ -103,7 +103,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 20 "lang.y"
+#line 25 "lang.y"
 
      char* string;
      int integer;

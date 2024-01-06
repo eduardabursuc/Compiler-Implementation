@@ -3,6 +3,7 @@
 #include <vector>
 #include "lang.h"
 #include <cstring>
+#include <cstdio>
 
 using namespace std;
 
@@ -14,6 +15,10 @@ extern int yylex();
 vector<Parameter> globalParams;
 class IdList ids;
 string scope = "global";
+vector<int> intVals;
+vector<float> floatVals;
+vector<char> charVals;
+vector<bool> boolVals;
 
 void yyerror(const char * s);
 %}
@@ -32,8 +37,11 @@ void yyerror(const char * s);
 %token NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
 %token ENTRY EXIT MAIN FNENTRY FNEXIT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC RETURN PRINT
-%token<string> ID TYPE EVAL TYPEOF INT FLOAT BOOL CHAR STRING
-
+%token<string> ID TYPE EVAL TYPEOF STRING
+%token<integer> INT
+%token<character> CHAR
+%token<floatnum> FLOAT
+%token<boolean> BOOL
 
 %left OR 
 %left AND
@@ -49,7 +57,6 @@ void yyerror(const char * s);
 %type <ASTNode> arithm_expr bool_expr expression
 %type <param> parameter
 %type <var> fn_call
-%type <string> one_type_values int_values float_values bool_values char_values
 
 %%
 
@@ -68,7 +75,7 @@ user_defined_type: CLASS ID { scope = $2; } '{' field_variables field_functions 
                  ;
 
 field_variables: /*empty*/ {}
-               | field_variables variable_declaration { }
+               | field_variables variable_declaration {  }
 	          ;
 
 field_functions: /*empty*/ { }
@@ -122,7 +129,8 @@ variable_declaration: TYPE ID ';' {
                             return 1;
                         } else if ($1 == type){
                             Value val(type);
-                            val.charVal = *$4;
+                            val.isCharSet = true;
+                            val.charVal = $4;
                             Variable var($2, val);
                             ids.addVar(var);
                             printf("Expr value: %c", val.charVal);
@@ -138,6 +146,7 @@ variable_declaration: TYPE ID ';' {
                             return 1;
                         } else if ($1 == type){
                             Value val(type);
+                            val.isStringSet = true;
                             val.stringVal = $4;
                             Variable var($2, val);
                             ids.addVar(var);
@@ -154,10 +163,13 @@ variable_declaration: TYPE ID ';' {
                         if ($1 == $4->TypeOf()) {
                             Value val($1);
                             if(val.type == "int") {
+                                val.isIntSet = true;
                                 val.intVal = $4->Eval().intVal;
                             } else if (val.type == "float") {
+                                val.isFloatSet = true;
                                 val.floatVal = $4->Eval().floatVal;
                             } else if (val.type == "bool") {
+                                val.isBoolSet = true;
                                 val.boolVal = $4->Eval().boolVal;
                             }        
                             Variable var($2, val);
@@ -187,10 +199,13 @@ variable_declaration: TYPE ID ';' {
                             Value val($2);
                             val.isConst = true;
                             if(val.type == "int") {
+                                val.isIntSet = true;
                                 val.intVal = $5->Eval().intVal;
                             } else if (val.type == "float") {
+                                val.isFloatSet = true;
                                 val.floatVal = $5->Eval().floatVal;
                             } else if (val.type == "bool") {
+                                val.isBoolSet = true;
                                 val.boolVal = $5->Eval().boolVal;
                             } 
                             Variable var($3, val);
@@ -229,41 +244,99 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                         printf("Array already exists.");
                         return 1;
                     } else {
-                        Array arr($2, atoi($4), $1);
+                        Array arr($2, $4, $1);
                         ids.addArr(arr);
                     }
                  }
-                 | TYPE ID '['']' '=' '[' one_type_values ']' ';' {
+                 | TYPE ID '[' ']' '=' '[' int_values ']' ';' {
                     if( ids.exists($2) ) {
                         printf("Array already exists.");
                         return 1;
                     } else {
-                        Array arr($2, $1, $7);
+                        Array arr($2, static_cast<int>(intVals.size()), $1);
+                        
+                        for (const auto &element : intVals) {
+                            char val[10];
+                            sprintf(val, "%d", element);
+                            arr.push(Value(val, "int"));
+                        }
+
+                        intVals.clear();
                         ids.addArr(arr);
+                        
+                    }
+                 }
+                 | TYPE ID '[' ']' '=' '[' float_values ']' ';' {
+                    if( ids.exists($2) ) {
+                        printf("Array already exists.");
+                        return 1;
+                    } else {
+                        Array arr($2, static_cast<int>(floatVals.size()), $1);
+                        
+                        for (const auto &element : floatVals) {
+                            char val[64];
+                            sprintf(val, "%f", element);
+                            arr.push(Value(val, "float"));
+                        }
+                        
+                        ids.addArr(arr);
+                        floatVals.clear();
+                    }
+                 }
+                 | TYPE ID '[' ']' '=' '[' char_values ']' ';' {
+                    if( ids.exists($2) ) {
+                        printf("Array already exists.");
+                        return 1;
+                    } else {
+                        Array arr($2, static_cast<int>(charVals.size()), $1);
+                        
+                        for (const auto &element : charVals) {
+                            char val[10];
+                            sprintf(val, "%c", element);
+                            arr.push(Value(val, "char"));
+                        }
+                        
+                        ids.addArr(arr);
+                        charVals.clear();
+                    }
+                 }
+                 | TYPE ID '[' ']' '=' '[' bool_values ']' ';' {
+                    if( ids.exists($2) ) {
+                        printf("Array already exists.");
+                        return 1;
+                    } else {
+                        Array arr($2, static_cast<int>(boolVals.size()), $1);
+                        
+                        for (const auto &element : boolVals) { 
+                            char val[6];
+                            if (element){
+                                strcpy(val, "true");
+                            } else {
+                                strcpy(val, "false");
+                            }
+                            arr.push(Value(val, "bool"));
+                        }
+                        
+                        ids.addArr(arr);
+                        boolVals.clear();
                     }
                  }
                  ;
                  
-one_type_values: int_values
-               | float_values
-               | bool_values
-               | char_values
-               ;
-               
-int_values: int_values INT
-          | INT
+int_values: int_values ',' INT {intVals.push_back($3);}
+          | INT {intVals.push_back($1);}
           ;
           
-float_values: float_values FLOAT
-            | FLOAT
+float_values: float_values ',' FLOAT {floatVals.push_back($3);}
+            | FLOAT {floatVals.push_back($1);}
             ;
             
-bool_values: bool_values BOOL
-           | BOOL
+bool_values: bool_values ',' BOOL {boolVals.push_back($3);}
+           | BOOL {boolVals.push_back($1);}
            ;
            
-char_values: char_values CHAR
-           | CHAR
+char_values: char_values ',' CHAR {charVals.push_back($3);}
+           | CHAR {charVals.push_back($1);}
            ;
 
 block: statement
@@ -283,9 +356,101 @@ statement: variable_declaration
          | RETURN CHAR ';'
          ;
 
-assignment_statement: ID '=' expression ';' {}
-                    | ID '=' CHAR ';' {}
-                    | ID '=' STRING ';' {}
+assignment_statement: ID '=' expression ';' {
+                        if( ids.exists($1) ) {
+                            Value result = $3->Eval();
+                            Variable& var = ids.getVar($1);
+                            if (var.val.type == $3->TypeOf()){
+                                if (var.val.type == "int") {
+                                    var.val.isIntSet = true;
+                                    var.val.intVal = result.intVal;
+                                } else if (var.val.type == "float") {
+                                    var.val.isFloatSet = true;
+                                    var.val.floatVal = result.floatVal;
+                                } else if (var.val.type == "bool") {
+                                    var.val.isBoolSet = true;
+                                    var.val.boolVal = result.boolVal;
+                                }
+                            } else {
+                                printf("Different types.");
+                                return 1;
+                            }        
+                        } else {
+                            printf("Variable not found.");
+                            return 1;
+                        }
+                    }
+                    | ID '=' CHAR ';' {
+                        if( ids.exists($1) ) {
+
+                            Variable& var = ids.getVar($1);
+                            if (var.val.type == "char"){
+                                var.val.isCharSet = true;
+                                var.val.charVal = $3;  
+                            } else {
+                                printf("Different types.");
+                                return 1;
+                            }   
+
+                        } else {
+                            printf("Variable not found.");
+                            return 1;
+                        }
+                    }
+                    | ID '=' STRING ';' {
+                        if( ids.exists($1) ) {
+
+                            Variable& var = ids.getVar($1);
+                            if (var.val.type == "string"){
+                                var.val.isStringSet = true;
+                                var.val.stringVal = $3;  
+                            } else {
+                                printf("Different types.");
+                                return 1;
+                            }   
+
+                        } else {
+                            printf("Variable not found.");
+                            return 1;
+                        }
+                    }
+                    | ID '[' INT ']' '=' expression ';' {
+
+                        Value result = $6->Eval();
+                        if( ids.exists($1) ) {
+                            
+                            Array& arr = ids.getArray($1);
+                            if (arr.type == result.type){
+                                arr.add($3, result);
+                            } else {
+                                printf("Different types.");
+                                return 1;
+                            }   
+
+                        } else {
+                            printf("Variable not found.");
+                            return 1;
+                        }
+                    }
+                    | ID '[' INT ']' '=' CHAR ';' {
+                        if( ids.exists($1)) {
+                            Array& arr = ids.getArray($1);
+                            if (arr.type == "char"){
+                                Value val("char");
+                                val.charVal = $6;
+                                val.isCharSet = true;
+                                val.type = "char";
+                                arr.add($3, val);
+                            } else {
+                                printf("Different types.");
+                                return 1;
+                            }   
+
+                        } else {
+                            printf("Variable not found.");
+                            return 1;
+                        }
+                    }
                     ;
 
 control_statement: if_statement
@@ -323,35 +488,48 @@ expression: arithm_expr { $$ = $1; }
 arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "+", $3); 
-               else 
-                   printf("Different types.\n");
+               else{
+                    printf("Different types.\n");
+                    return 1;
+               }
 
            }
            | arithm_expr '-' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "-", $3); 
-               else 
-                   printf("Different types.\n");
+               else {
+                    printf("Different types.\n");
+                    return 1;
+               }
            }
            | arithm_expr '/' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "/", $3); 
-               else 
-                   printf("Different types.\n");
+               else {
+                    printf("Different types.\n");
+                    return 1;
+               }
            }
            | arithm_expr '*' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "*", $3); 
-               else 
+               else {
                     printf("Different types.\n");
+                    return 1;
+               }
            }
            | arithm_expr '%' arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "%", $3); 
-               else 
+               else {
                     printf("Different types.\n");
+                    return 1;
+               }
+                    
            }
-           | '(' arithm_expr ')' {}
+           | '(' arithm_expr ')' {
+                $$ = $2;
+           }
            | INT {
                char* identifierText = strdup(yytext);
                $$ = new AST(new Value(identifierText, "int")); 
@@ -403,43 +581,61 @@ bool_expr: bool_expr AND bool_expr {
          | NOT bool_expr {
                $$ = new AST($2, "not", NULL); 
          }
-         | '(' bool_expr ')' {}
-         | BOOL {}
+         | '(' bool_expr ')' {
+            $$ = $2;
+         }
+         | BOOL { 
+            char* identifierText = strdup(yytext);
+            $$ = new AST(new Value(identifierText, "bool"));
+          }
          | arithm_expr GT arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "gt", $3); 
-               else 
+               else {
                     printf("Different types.\n");
+                    return 1;
+               }
            }
          | arithm_expr LT arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "lt", $3); 
-               else 
-                    printf("Different types\n");
+               else{
+                    printf("Different types.\n");
+                    return 1;
+               }
            }
          | arithm_expr GEQ arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "geq", $3); 
-               else 
+               else {
                     printf("Different types.\n");
+                    return 1;
+               }
            }
          | arithm_expr LEQ arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "leq", $3); 
-               else 
+               else {
                     printf("Different types.\n");
+                    return 1;
+               }
+                    
            }
          | arithm_expr EQ arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "eq", $3); 
-               else 
+               else {
                     printf("Different types.\n");
+                    return 1;
+               }
            }
          | arithm_expr NEQ arithm_expr {
                if ($1->type == $3->type)
                    $$ = new AST($1, "neq", $3); 
-               else 
+               else {
                     printf("Different types.\n");
+                    return 1;
+               }
            }
          ;
 
@@ -465,6 +661,7 @@ int main(int argc, char** argv) {
     ids.printVars();
     ids.printFuncs();
     ids.printUsrDefs();
+    ids.printArrays();
     ids.exportToFile("symbol_table.txt");
     return 0;
 }

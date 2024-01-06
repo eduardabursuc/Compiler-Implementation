@@ -9,6 +9,9 @@ Name: globalInt, Type: int, Const?: [Const]
 Name: globalFloat, Type: float, Const?: [Not Const]
 Name: name, Type: string, Const?: [Not Const]
 Name: object, Type: MyFirstClass, Const?: [Not Const]
+Name: c, Type: int, Const?: [Not Const]
+Name: character, Type: char, Const?: [Not Const]
+Name: str, Type: string, Const?: [Not Const]
 Name: test, Type: int, Const?: [Not Const]
 
 Functions List:

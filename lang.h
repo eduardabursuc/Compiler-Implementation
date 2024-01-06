@@ -59,6 +59,7 @@ class Variable
 public:
     std::string name;
     Value val;
+    string scope = "global";
 
     Variable(const std::string &name, const Value &val)
         : name(name), val(val) {}
@@ -72,6 +73,7 @@ public:
     {
         return this->val.type;
     }
+
 };
 
 class Parameter
@@ -108,28 +110,35 @@ class Array
 public:
     string name;
     string type;
+
     int capacity = 0;
+    int index = 0;
+
     vector<Value> vals;
     Array(const string &name, int capacity, string type): name(name), capacity(capacity), type(type) {}
-    Array(const string &name, string type, const string &value){
-        this->name = name;
-        this->type = type;
-        char* valueCopy = strdup(value.c_str());
 
-        if (valueCopy != nullptr) {
-
-            char* token = strtok(valueCopy, ",");
-
-            while (token != nullptr) {
-                this->vals.push_back(Value(token));
-
-                token = strtok(nullptr, ",");
-            }
-
-            free(valueCopy);
+    void push(Value val) {
+        index ++;
+        if ( index <= capacity ){
+            vals.push_back(val);
+        } else {
+            printf("Segmentation fault.");
+            return;
         }
+        
     }
 
+    void add(int ind, Value val) {
+    if (ind < 0 || ind > capacity) {
+        printf("Index out of bounds.\n");
+        return;
+    } else {
+        for( int i = 0; i < ind; i++ ){
+            vals.resize(ind + 1, Value());
+        }
+        vals.at(ind) = val;
+    }
+}
 
 };
 
@@ -164,9 +173,14 @@ public:
     }
 
     Variable& getVar(const char *name) {
-        for (auto &var : vars)
-            if (var.name == name)
+
+        for (auto &var : vars) {
+            if (var.name == name) {
                 return var;
+            }
+        }
+
+        throw std::runtime_error("Variable not found: " + std::string(name));
     }
 
     Function& getFunc(const char *name) {
@@ -185,6 +199,7 @@ public:
         for (auto &array : arrays)
             if (array.name == name)
                 return array;
+        throw std::runtime_error("Variable not found: " + std::string(name));
     }
 
     void addVar(const Variable &var)
@@ -286,6 +301,35 @@ public:
         for (const auto &usrdef : usrdefs)
         {
             std::cout << "Name: " << usrdef.name << std::endl;
+        }
+    }
+
+    void printArrays()
+    {
+        if (arrays.empty())
+        {
+            std::cout << "No arrays to display." << std::endl;
+            return;
+        }
+
+        std::cout << "Arrays:" << std::endl;
+        for (const auto &array : arrays)
+        {
+            std::cout << "Name: " << array.name << ", Type: " << array.type << ", Capacity: " << array.capacity << std::endl;
+            std::cout << "\tElements: ";
+            for (auto &element : array.vals)
+            {
+                if( element.type == "char" ) {
+                    cout << element.charVal << " ";
+                } else if ( element.type == "float"  ) {
+                    cout << element.floatVal << " ";
+                } else if ( element.type == "bool" ) {
+                    cout << element.boolVal << " ";
+                } else if ( element.type == "int"  ) {
+                    cout << element.intVal << " ";
+                }
+            }
+            std::cout << std::endl;
         }
     }
 
@@ -537,8 +581,13 @@ public:
                 {
                     if (leftType == rightType)
                     {
-                        this->type = leftType;
-                        return leftType;
+                        if ( root == "+" || root == "-" || root == "/" || root == "*" || root == "%"){
+                            this->type = leftType;
+                            return leftType;
+                        } else {
+                            return "bool";
+                        }
+                        
                     }
                     else
                     {
@@ -549,7 +598,7 @@ public:
             }
             else
             {
-                return "";
+                return left->TypeOf();
             }
         }
 

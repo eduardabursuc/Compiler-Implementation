@@ -986,13 +986,13 @@ case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
 #line 41 "lang.l"
-{ yylval.string = strdup(yytext); return STRING; }
+{ yytext = yytext+1; yytext[strlen(yytext) - 1] = '\0'; yylval.string = strdup(yytext); return STRING; }
 	YY_BREAK
 case 35:
 /* rule 35 can match eol */
 YY_RULE_SETUP
 #line 42 "lang.l"
-{ yylval.character = yytext[0]; return CHAR; }
+{ yylval.character = yytext[1]; return CHAR; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
