@@ -59,7 +59,7 @@ class Variable
 public:
     std::string name;
     Value val;
-    string scope = "global";
+    string scope;
 
     Variable(const std::string &name, const Value &val)
         : name(name), val(val) {}
@@ -73,7 +73,6 @@ public:
     {
         return this->val.type;
     }
-
 };
 
 class Parameter
@@ -103,7 +102,6 @@ public:
     string name;
     UserDefinedType(const string &name)
         : name(name) {}
-
 };
 
 class Array
@@ -111,49 +109,61 @@ class Array
 public:
     string name;
     string type;
-
+    string scope;
     int capacity = 0;
     int index = 0;
 
     vector<Value> vals;
-    Array(const string &name, int capacity, string type): name(name), capacity(capacity), type(type) {}
+    Array(const string &name, int capacity, string type) : name(name), capacity(capacity), type(type) {}
 
-    void push(Value val) {
-        index ++;
-        if ( index <= capacity ){
+    void push(Value val)
+    {
+        index++;
+        if (index <= capacity)
+        {
             vals.push_back(val);
-        } else {
+        }
+        else
+        {
             printf("Segmentation fault.");
             return;
         }
-        
     }
 
-    void add(int ind, Value val) {
-    if (ind < 0 || ind > capacity) {
-        printf("Index out of bounds.\n");
-        return;
-    } else if (ind > index){
-        for( int i = 0; i < ind; i++ ){
-            vals.resize(ind + 1, Value());
+    void add(int ind, Value val)
+    {
+        if (ind < 0 || ind > capacity)
+        {
+            printf("Index out of bounds.\n");
+            return;
         }
-        vals.at(ind) = val;
-    } else {
-        vals.at(ind) = val;
-    }
+        else if (ind > index)
+        {
+            for (int i = 0; i < ind; i++)
+            {
+                vals.resize(ind + 1, Value());
+            }
+            vals.at(ind) = val;
+        }
+        else
+        {
+            vals.at(ind) = val;
+        }
     }
 
-    Value getVal(int ind) {
+    Value getVal(int ind)
+    {
 
-        if (ind < 0 || ind > capacity || ind > index) {
+        if (ind < 0 || ind > capacity || ind > index)
+        {
             printf("Index out of bounds.\n");
             return Value();
-        } else {
+        }
+        else
+        {
             return vals.at(ind);
         }
-
     }
-
 };
 
 class IdList
@@ -183,13 +193,15 @@ public:
                 return true;
 
         return false;
-
     }
 
-    Variable& getVar(const char *name) {
+    Variable &getVar(const char *name)
+    {
 
-        for (auto &var : vars) {
-            if (var.name == name) {
+        for (auto &var : vars)
+        {
+            if (var.name == name)
+            {
                 return var;
             }
         }
@@ -197,19 +209,22 @@ public:
         throw std::runtime_error("Variable not found: " + std::string(name));
     }
 
-    Function& getFunc(const char *name) {
+    Function &getFunc(const char *name)
+    {
         for (auto &func : funcs)
             if (func.name == name)
                 return func;
     }
 
-    UserDefinedType& getUDT(const char *name) {
+    UserDefinedType &getUDT(const char *name)
+    {
         for (auto &udt : usrdefs)
             if (udt.name == name)
                 return udt;
     }
 
-    Array& getArray(const char *name) {
+    Array &getArray(const char *name)
+    {
         for (auto &array : arrays)
             if (array.name == name)
                 return array;
@@ -251,7 +266,7 @@ public:
         std::cout << "Variables List:" << std::endl;
         for (const auto &var : vars)
         {
-            std::cout << "Name: " << var.name << ", Type: " << var.val.type;
+            std::cout << "Name: " << var.name << ", Type: " << var.val.type << ", Scope: " << var.scope;
 
             if (var.val.isIntSet)
                 std::cout << ", Int Value: " << var.val.intVal;
@@ -264,11 +279,11 @@ public:
             if (var.val.isStringSet)
                 std::cout << ", String Value: " << var.val.stringVal;
 
-            std::cout << " Const?:";
+            std::cout << ", is constant?:";
             if (var.val.isConst)
-                std::cout << " [Const]";
+                std::cout << " Const";
             else
-                std::cout << " [Not Const]";
+                std::cout << " Not Const";
 
             std::cout << std::endl;
         }
@@ -285,7 +300,7 @@ public:
         std::cout << "Functions List:" << std::endl;
         for (const auto &func : funcs)
         {
-            std::cout << "Name: " << func.name << ", Return Type: " << func.returnType << std::endl;
+            std::cout << "Name: " << func.name << ", Return Type: " << func.returnType << ", Scope: " << func.scope << std::endl;
             if (!func.params.empty())
             {
                 std::cout << "\tParameters: " << std::endl;
@@ -293,13 +308,12 @@ public:
                 {
                     std::cout << "\t\tName: " << param.name << ", Type: " << param.type;
                 }
-                std::cout << ", Const?: ";
+                std::cout << ", is constant?: ";
                 if (func.params.back().isConst)
-                    std::cout << "[Const]   ";
+                    std::cout << "Const";
                 else
-                    std::cout << "[Not Const]   ";
-
-                cout << "Scope: " << func.scope <<std::endl;
+                    std::cout << "Not Const";
+                std::cout << std::endl;
             }
         }
     }
@@ -327,24 +341,36 @@ public:
             return;
         }
 
-        std::cout << "Arrays:" << std::endl;
+        std::cout << "Arrays List:" << std::endl;
         for (const auto &array : arrays)
         {
-            std::cout << "Name: " << array.name << ", Type: " << array.type << ", Capacity: " << array.capacity << std::endl;
-            std::cout << "\tElements: ";
-            for (auto &element : array.vals)
+            std::cout << "Name: " << array.name << ", Type: " << array.type << ", Capacity: " << array.capacity << ", Scope: " << array.scope << std::endl;
+            if (!array.vals.empty())
             {
-                if( element.type == "char" ) {
-                    cout << element.charVal << " ";
-                } else if ( element.type == "float"  ) {
-                    cout << element.floatVal << " ";
-                } else if ( element.type == "bool" ) {
-                    cout << element.boolVal << " ";
-                } else if ( element.type == "int"  ) {
-                    cout << element.intVal << " ";
+                std::cout << "\tElements: ";
+                for (auto &element : array.vals)
+                {
+                    if (element.type == "char")
+                    {
+                        cout << element.charVal << " ";
+                    }
+                    else if (element.type == "float")
+                    {
+                        cout << element.floatVal << " ";
+                    }
+                    else if (element.type == "bool")
+                    {
+                        cout << element.boolVal << " ";
+                    }
+                    else if (element.type == "int")
+                    {
+                        cout << element.intVal << " ";
+                    }
                 }
+                std::cout << std::endl;
             }
-            std::cout << std::endl;
+            else
+                cout << "\tElements: None" << std::endl;
         }
     }
 
@@ -353,19 +379,63 @@ public:
         std::ofstream file(fileName);
         if (file.is_open())
         {
+            file << "SYMBOL TABLE\n\n";
             file << "Variables List:\n";
             for (const auto &var : vars)
             {
-                file << "Name: " << var.name << ", Type: " << var.val.type << ", Const?: [" << (var.val.isConst ? "Const" : "Not Const") << "]\n";
+                file << "Name: " << var.name << ", Type: " << var.val.type << ", Scope: " << var.scope;
+                if (var.val.isIntSet)
+                    file << ", Value: " << var.val.intVal;
+                if (var.val.isFloatSet)
+                    file << ", Value: " << var.val.floatVal;
+                if (var.val.isBoolSet)
+                    file << ", Value: " << (var.val.boolVal ? "true" : "false");
+                if (var.val.isCharSet)
+                    file << ", Value: " << var.val.charVal;
+                if (var.val.isStringSet)
+                    file << ", String Value: " << var.val.stringVal;
+                file << ", Is Const?: " << (var.val.isConst ? "CONST" : "NOT CONST") << "\n";
+            }
+
+            file << "\nArrays List:\n";
+            for (const auto &array : arrays)
+            {
+                file << "Name: " << array.name << ", Type: " << array.type << ", Capacity: " << array.capacity << ", Scope: " << array.scope;
+                if (!array.vals.empty())
+                {
+                    file << "\n\tElements: ";
+                    for (const auto &element : array.vals)
+                    {
+                        if (element.type == "char")
+                        {
+                            file << element.charVal << " ";
+                        }
+                        else if (element.type == "float")
+                        {
+                            file << element.floatVal << " ";
+                        }
+                        else if (element.type == "bool")
+                        {
+                            file << element.boolVal << " ";
+                        }
+                        else if (element.type == "int")
+                        {
+                            file << element.intVal << " ";
+                        }
+                    }
+                    file << "\n";
+                }
+                else
+                    file << ", Elements: None\n";
             }
 
             file << "\nFunctions List:\n";
             for (const auto &func : funcs)
             {
-                file << "Name: " << func.name << ", Return Type: " << func.returnType << "\n\tParameters:\n";
+                file << "Name: " << func.name << ", Return Type: " << func.returnType << ", Scope: " << func.scope << "\n\tParameters:\n";
                 for (const auto &param : func.params)
                 {
-                    file << "\t\tName: " << param.name << ", Type: " << param.type << ", Const?: [" << (param.isConst ? "Const" : "Not Const") << "]\n";
+                    file << "\t\tName: " << param.name << ", Type: " << param.type << ", Is Const?: " << (param.isConst ? "CONST" : "NOT CONST") << "\n";
                 }
             }
 
@@ -374,7 +444,6 @@ public:
             {
                 file << "Name: " << typeName.name << "\n";
             }
-
             file.close();
         }
         else
@@ -398,30 +467,50 @@ public:
 
     AST(AST *left, string root, AST *right) : root(root), left(left), right(right) {}
 
-    AST(Value *val) : val(*val){
-        if (val->isIntSet) {
+    AST(Value *val) : val(*val)
+    {
+        if (val->isIntSet)
+        {
             type = "int";
-        } else if (val->isFloatSet) {
+        }
+        else if (val->isFloatSet)
+        {
             type = "float";
-        } else if (val->isBoolSet) {
+        }
+        else if (val->isBoolSet)
+        {
             type = "bool";
-        } else if (val->isCharSet) {
+        }
+        else if (val->isCharSet)
+        {
             type = "char";
-        } else if (val->isStringSet) {
+        }
+        else if (val->isStringSet)
+        {
             type = "string";
         }
     }
 
-    AST(Value val) : val(val) {
-        if (val.isIntSet) {
+    AST(Value val) : val(val)
+    {
+        if (val.isIntSet)
+        {
             type = "int";
-        } else if (val.isFloatSet) {
+        }
+        else if (val.isFloatSet)
+        {
             type = "float";
-        } else if (val.isBoolSet) {
+        }
+        else if (val.isBoolSet)
+        {
             type = "bool";
-        } else if (val.isCharSet) {
+        }
+        else if (val.isCharSet)
+        {
             type = "char";
-        } else if (val.isStringSet) {
+        }
+        else if (val.isStringSet)
+        {
             type = "string";
         }
     }
@@ -433,7 +522,7 @@ public:
         {
             return val;
         }
-        else if ( left && right && left->TypeOf().compare(right->TypeOf()) == 0)
+        else if (left && right && left->TypeOf().compare(right->TypeOf()) == 0)
         {
 
             Value leftResult = left->Eval();
@@ -464,7 +553,8 @@ public:
                 else if (root == "%")
                 {
                     result.intVal = leftResult.intVal % rightResult.intVal;
-                } else if (root == "gt")
+                }
+                else if (root == "gt")
                 {
                     result.boolVal = leftResult.intVal > rightResult.intVal;
                 }
@@ -509,7 +599,8 @@ public:
                 else if (root == "/")
                 {
                     result.floatVal = leftResult.floatVal / rightResult.floatVal;
-                } else if (root == "gt")
+                }
+                else if (root == "gt")
                 {
                     result.boolVal = leftResult.floatVal > rightResult.floatVal;
                 }
@@ -574,13 +665,16 @@ public:
             }
 
             return result;
-
-        } else if (left && root == "not"){
+        }
+        else if (left && root == "not")
+        {
             Value result;
             result.isBoolSet = true;
             result.boolVal = !left->Eval().boolVal;
             return result;
-        } else {
+        }
+        else
+        {
             return val;
         }
     }
@@ -598,13 +692,15 @@ public:
                 {
                     if (leftType == rightType)
                     {
-                        if ( root == "+" || root == "-" || root == "/" || root == "*" || root == "%"){
+                        if (root == "+" || root == "-" || root == "/" || root == "*" || root == "%")
+                        {
                             this->type = leftType;
                             return leftType;
-                        } else {
+                        }
+                        else
+                        {
                             return "bool";
                         }
-                        
                     }
                     else
                     {
@@ -620,35 +716,44 @@ public:
         }
 
         return type;
-
     }
 
-    void printAst() {
+    void printAst()
+    {
 
-    if(left != NULL)
-    this->left->printAst();
+        if (left != NULL)
+            this->left->printAst();
 
-    // Print current node's data
-    if( !root.empty() ){
-        cout << root << " ";
-    } else {
-        if (val.isIntSet) {
-            cout << val.intVal << " ";
-        } else if (val.isFloatSet) {
-            cout << val.floatVal << " ";
-        } else if (val.isBoolSet) {
-            cout << val.boolVal << " ";
-        } else if (val.isCharSet) {
-            cout << val.charVal << " ";
-        } else if (val.isStringSet) {
-            cout << val.stringVal << " ";
+        // Print current node's data
+        if (!root.empty())
+        {
+            cout << root << " ";
         }
+        else
+        {
+            if (val.isIntSet)
+            {
+                cout << val.intVal << " ";
+            }
+            else if (val.isFloatSet)
+            {
+                cout << val.floatVal << " ";
+            }
+            else if (val.isBoolSet)
+            {
+                cout << val.boolVal << " ";
+            }
+            else if (val.isCharSet)
+            {
+                cout << val.charVal << " ";
+            }
+            else if (val.isStringSet)
+            {
+                cout << val.stringVal << " ";
+            }
+        }
+
+        if (right != NULL)
+            this->right->printAst();
     }
-
-    if(right != NULL)
-    this->right->printAst();
-
-
-    }
-
 };

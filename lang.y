@@ -15,6 +15,7 @@ extern int yylex();
 vector<Parameter> globalParams;
 class IdList ids;
 string scope = "global";
+string altscope;
 vector<int> intVals;
 vector<float> floatVals;
 vector<char> charVals;
@@ -76,22 +77,25 @@ user_defined_type: CLASS ID { scope = $2; } '{' field_variables field_functions 
 
 field_variables: /*empty*/ {}
                | field_variables variable_declaration {  }
-	          ;
+               | field_variables array_declaration {  }
+	           ;
 
 field_functions: /*empty*/ { }
                | field_functions function_declaration { }
 	       ;
 
-function_declaration: FNENTRY TYPE ID {Function func($3, $2, globalParams, scope); ids.addFunc(func); globalParams.clear(); scope = $3; } '(' parameter_list ')' '{' block '}' {                                          
-                        scope = "global";
-
+function_declaration: FNENTRY TYPE ID { altscope = scope; scope = $3; } '(' parameter_list ')' '{' block '}' {
+                    Function func($3, $2, globalParams, altscope); 
+                    ids.addFunc(func); 
+                    globalParams.clear();                                
+                    scope = altscope;
                     } ;
 	       
 
 global_variables: 
                   | global_variables variable_declaration
                   | global_variables array_declaration
-                  | class_var_declaration
+                  | global_variables class_var_declaration
                   ;
 
 global_functions: 
@@ -109,7 +113,7 @@ parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));}
             Parameter param($3, $2);
             param.isConst = true; 
             globalParams.push_back(param);
-         }
+        }
         ;
 
 variable_declaration: TYPE ID ';' {
@@ -119,6 +123,7 @@ variable_declaration: TYPE ID ';' {
                         } else {
                             Value val($1);
                             Variable var($2, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         }                        
                     }
@@ -132,6 +137,7 @@ variable_declaration: TYPE ID ';' {
                             val.isCharSet = true;
                             val.charVal = $4;
                             Variable var($2, val);
+                            var.scope = scope;
                             ids.addVar(var);
                             printf("Expr value: %c", val.charVal);
                         }  else {
@@ -149,6 +155,7 @@ variable_declaration: TYPE ID ';' {
                             val.isStringSet = true;
                             val.stringVal = $4;
                             Variable var($2, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         }  else {
                             printf("Different types.");
@@ -173,6 +180,7 @@ variable_declaration: TYPE ID ';' {
                                 val.boolVal = $4->Eval().boolVal;
                             }        
                             Variable var($2, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
@@ -187,6 +195,7 @@ variable_declaration: TYPE ID ';' {
                             Value val($2);
                             val.isConst = true;
                             Variable var($3, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         }
                     }
@@ -209,6 +218,7 @@ variable_declaration: TYPE ID ';' {
                                 val.boolVal = $5->Eval().boolVal;
                             } 
                             Variable var($3, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
@@ -228,6 +238,7 @@ variable_declaration: TYPE ID ';' {
                             val.charVal = $5;
                             val.isCharSet = true;
                             Variable var($3, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
@@ -247,6 +258,7 @@ variable_declaration: TYPE ID ';' {
                             val.stringVal = $5;
                             val.isStringSet = true;
                             Variable var($3, val);
+                            var.scope = scope;
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
@@ -261,18 +273,21 @@ variable_declaration: TYPE ID ';' {
 class_var_declaration: CLASS ID ID ';' {
                             Value val($2);
                             Variable var($3, val);
+                            var.scope = scope;
                             ids.addVar(var);
                      }
                      | CLASS ID ID '=' ID ';' {
                             //check if they have same type
                             Value val($2);
                             Variable var($3, val);
+                            var.scope = scope;
                             ids.addVar(var);    
                      }
                      | CLASS ID ID '=' fn_call ';' {
                         //check if they have same type
                             Value val($2);
                             Variable var($3, val);
+                            var.scope = scope;
                             ids.addVar(var);
                      }
                      ;
@@ -283,6 +298,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                         return 1;
                     } else {
                         Array arr($2, $4, $1);
+                        arr.scope = scope;
                         ids.addArr(arr);
                     }
                  }
@@ -300,6 +316,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                         }
 
                         intVals.clear();
+                        arr.scope = scope;
                         ids.addArr(arr);
                         
                     }
@@ -316,7 +333,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             sprintf(val, "%f", element);
                             arr.push(Value(val, "float"));
                         }
-                        
+                        arr.scope = scope;
                         ids.addArr(arr);
                         floatVals.clear();
                     }
@@ -333,7 +350,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             sprintf(val, "%c", element);
                             arr.push(Value(val, "char"));
                         }
-                        
+                        arr.scope = scope;
                         ids.addArr(arr);
                         charVals.clear();
                     }
@@ -354,7 +371,7 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             }
                             arr.push(Value(val, "bool"));
                         }
-                        
+                        arr.scope = scope;
                         ids.addArr(arr);
                         boolVals.clear();
                     }
@@ -388,7 +405,7 @@ statement: variable_declaration
          | control_statement 
          | fn_call ';'
          | RETURN expression ';' {
-            
+
          }
          | RETURN STRING ';' 
          | RETURN CHAR ';'
@@ -529,7 +546,7 @@ assignment_statement: ID '=' expression ';' {
                     }
                     ;
 
-control_statement: if_statement 
+control_statement: if_statement
                  | SWITCH expression'{' case_block DEFAULT ':' block '}'
                  | SWITCH STRING'{' case_block DEFAULT ':' block '}'
                  | SWITCH CHAR'{' case_block DEFAULT ':' block '}'
@@ -538,7 +555,7 @@ control_statement: if_statement
                  ;
 
                  
-if_statement: IF bool_expr '{' block '}' ELSE '{' block '}' 
+if_statement: IF bool_expr '{' block '}' ELSE '{' block '}'
             | IF bool_expr '{' block '}' ELSE if_statement
             ;
             
@@ -729,7 +746,7 @@ bool_expr: bool_expr AND bool_expr {
                     
            }
          | arithm_expr EQ arithm_expr {
-               if ($1->Eval().type == $3->Eval().type)
+                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "eq", $3); 
                else {
                     printf("Different types.\n");
@@ -737,7 +754,7 @@ bool_expr: bool_expr AND bool_expr {
                }
            }
          | arithm_expr NEQ arithm_expr {
-               if ($1->Eval().type == $3->Eval().type)
+                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "neq", $3); 
                else {
                     printf("Different types.\n");
@@ -765,10 +782,10 @@ int main(int argc, char** argv) {
     yyin = fopen(argv[1], "r");
     yyparse();
 
-    ids.printVars();
+    /* ids.printVars();
     ids.printFuncs();
     ids.printUsrDefs();
-    ids.printArrays();
+    ids.printArrays(); */
     ids.exportToFile("symbol_table.txt");
     return 0;
 }
