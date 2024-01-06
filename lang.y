@@ -15,7 +15,6 @@ extern int yylex();
 vector<Parameter> globalParams;
 class IdList ids;
 string scope = "global";
-string altscope;
 vector<int> intVals;
 vector<float> floatVals;
 vector<char> charVals;
@@ -77,24 +76,20 @@ user_defined_type: CLASS ID { scope = $2; } '{' field_variables field_functions 
 
 field_variables: /*empty*/ {}
                | field_variables variable_declaration {  }
-               | field_variables array_declaration {  }
 	          ;
 
 field_functions: /*empty*/ { }
                | field_functions function_declaration { }
 	       ;
 
-function_declaration: FNENTRY TYPE ID { altscope = scope; scope = $3; } '(' parameter_list ')' '{' block '}' { 
-                        Function func($3, $2, globalParams /*, altscope*/);
-                        ids.addFunc(func);
-                        globalParams.clear();
-                        scope = altscope;
+function_declaration: FNENTRY TYPE ID {Function func($3, $2, globalParams, scope); ids.addFunc(func); globalParams.clear(); scope = $3; } '(' parameter_list ')' '{' block '}' {                                          
+                        scope = "global";
+
                     } ;
 	       
 
 global_variables: 
                   | global_variables variable_declaration
-                  | global_variables array_declaration
                   ;
 
 global_functions: 
@@ -122,7 +117,6 @@ variable_declaration: TYPE ID ';' {
                         } else {
                             Value val($1);
                             Variable var($2, val);
-                            var.scope = scope;
                             ids.addVar(var);
                         }                        
                     }
@@ -136,7 +130,6 @@ variable_declaration: TYPE ID ';' {
                             val.isCharSet = true;
                             val.charVal = $4;
                             Variable var($2, val);
-                            var.scope = scope;
                             ids.addVar(var);
                             printf("Expr value: %c", val.charVal);
                         }  else {
@@ -154,7 +147,6 @@ variable_declaration: TYPE ID ';' {
                             val.isStringSet = true;
                             val.stringVal = $4;
                             Variable var($2, val);
-                            var.scope = scope;
                             ids.addVar(var);
                         }  else {
                             printf("Different types.");
@@ -179,7 +171,6 @@ variable_declaration: TYPE ID ';' {
                                 val.boolVal = $4->Eval().boolVal;
                             }        
                             Variable var($2, val);
-                            var.scope = scope;
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
@@ -194,7 +185,6 @@ variable_declaration: TYPE ID ';' {
                             Value val($2);
                             val.isConst = true;
                             Variable var($3, val);
-                            var.scope = scope;
                             ids.addVar(var);
                         }
                     }
@@ -217,7 +207,44 @@ variable_declaration: TYPE ID ';' {
                                 val.boolVal = $5->Eval().boolVal;
                             } 
                             Variable var($3, val);
-                            var.scope = scope;
+                            ids.addVar(var);
+                        } else {
+                            printf("Different types.");
+                            return 1;
+                        }
+                        
+                    }
+                    | CONST TYPE ID '=' CHAR ';'  { 
+                        if ( ids.exists($3) ){
+                            printf("Variable already exists.");
+                            return 1;
+                        }
+                       string type = "char";
+                        if ( $2 == type) {
+                            Value val($2);
+                            val.isConst = true;
+                            val.charVal = $5;
+                            val.isCharSet = true;
+                            Variable var($3, val);
+                            ids.addVar(var);
+                        } else {
+                            printf("Different types.");
+                            return 1;
+                        }
+                        
+                    }
+                    | CONST TYPE ID '=' STRING ';'  { 
+                        if ( ids.exists($3) ){
+                            printf("Variable already exists.");
+                            return 1;
+                        }
+                        string type = "string";
+                        if ($2 == "string") {
+                            Value val($2);
+                            val.isConst = true;
+                            val.stringVal = $5;
+                            val.isStringSet = true;
+                            Variable var($3, val);
                             ids.addVar(var);
                         } else {
                             printf("Different types.");
@@ -233,7 +260,7 @@ class_var_declaration: CLASS ID ID ';' {
                             Value val($2);
                             Variable var($3, val);
                             ids.addVar(var);
-                    }
+                     }
                      | CLASS ID ID '=' ID ';' {
                             //check if they have same type
                             Value val($2);
@@ -254,7 +281,6 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                         return 1;
                     } else {
                         Array arr($2, $4, $1);
-                        arr.scope = scope;
                         ids.addArr(arr);
                     }
                  }
@@ -272,7 +298,6 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                         }
 
                         intVals.clear();
-                        arr.scope = scope;
                         ids.addArr(arr);
                         
                     }
@@ -290,7 +315,6 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             arr.push(Value(val, "float"));
                         }
                         
-                        arr.scope = scope;
                         ids.addArr(arr);
                         floatVals.clear();
                     }
@@ -308,7 +332,6 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             arr.push(Value(val, "char"));
                         }
                         
-                        arr.scope = scope;
                         ids.addArr(arr);
                         charVals.clear();
                     }
@@ -330,7 +353,6 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                             arr.push(Value(val, "bool"));
                         }
                         
-                        arr.scope = scope;
                         ids.addArr(arr);
                         boolVals.clear();
                     }
@@ -360,9 +382,9 @@ block: statement
 statement: variable_declaration
          | array_declaration
          | class_var_declaration
-         | assignment_statement { /* handle assignment statement */ }
-         | control_statement { /* handle control statement */ }
-         | fn_call ';' { /* handle function call */ }
+         | assignment_statement
+         | control_statement 
+         | fn_call ';'
          | RETURN expression ';' {
 
          }
@@ -465,6 +487,44 @@ assignment_statement: ID '=' expression ';' {
                             return 1;
                         }
                     }
+                    | ID '[' ID ']' '=' expression ';' {
+                        Value result = $6->Eval();
+                        if( ids.exists($1) && ids.exists($3)) {
+                            Array& arr = ids.getArray($1);
+                            Value& val = ids.getVar($3).val;
+                            if (arr.type == result.type && val.type == "int"){
+                                arr.add(val.intVal, result);
+                            } else {
+                                printf("Different types.");
+                                return 1;
+                            }   
+
+                        } else {
+                            printf("Variable not found.");
+                            return 1;
+                        }
+                    }
+                    | ID '[' ID ']' '=' CHAR ';' {
+
+                        if( ids.exists($1) && ids.exists($3)) {
+                            Array& arr = ids.getArray($1);
+                            Value& val = ids.getVar($3).val;
+                            if (arr.type == "char" && val.type == "int"){
+                                Value v("char");
+                                v.charVal = $6;
+                                v.isCharSet = true;
+                                v.type = "char";
+                                arr.add(val.intVal, v);
+                            } else {
+                                printf("Different types.");
+                                return 1;
+                            }   
+
+                        } else {
+                            printf("Variable not found.");
+                            return 1;
+                        }
+                    }
                     ;
 
 control_statement: if_statement
@@ -500,43 +560,53 @@ expression: arithm_expr { $$ = $1; }
  
         
 arithm_expr: arithm_expr '+' arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "+", $3); 
                else{
-                    printf("Different types.\n");
+                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());
+                    
                     return 1;
                }
 
            }
            | arithm_expr '-' arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "-", $3); 
                else {
-                    printf("Different types.\n");
+                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());
                     return 1;
                }
            }
            | arithm_expr '/' arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "/", $3); 
                else {
-                    printf("Different types.\n");
+                    printf("Different types between: ");
+                    $1->printAst();
+                    printf(" and ");
+                    $3->printAst();
                     return 1;
                }
            }
            | arithm_expr '*' arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "*", $3); 
                else {
-                    printf("Different types.\n");
+                    printf("Different types between: ");
+                    $1->printAst();
+                    printf(" and ");
+                    $3->printAst();
                     return 1;
                }
            }
            | arithm_expr '%' arithm_expr {
-               if ($1->type == $3->type)
+               if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "%", $3); 
                else {
-                    printf("Different types.\n");
+                    printf("Different types between: ");
+                    $1->printAst();
+                    printf(" and ");
+                    $3->printAst();
                     return 1;
                }
                     
@@ -553,7 +623,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                $$ = new AST(new Value(identifierText, "float")); 
            }
            | fn_call {
-               //$$ = new AST($1);
+               $$ = new AST($1->val);
             }
            | ID {
                 if( ids.exists($1) ) {
@@ -580,8 +650,29 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     return 1;
                 }
            }
-           | ID '[' ID ']' {}/* array type a[index] */
-           | ID '[' INT ']' {}/* array type a[7] */
+           | ID '[' ID ']' {
+                if( ids.exists($1) && ids.exists($3)) {
+                    Array arr = ids.getArray($1);
+                    Value val = ids.getVar($3).Eval();
+                    if( val.type == "int" )
+                        $$ = new AST(arr.getVal(val.intVal));
+                    else {
+                        printf("Invalid index.");
+                    }
+                } else {
+                    printf("Variable not found.");
+                    return 1;
+                }
+           }
+           | ID '[' INT ']' {
+                if( ids.exists($1) ) {
+                    Array arr = ids.getArray($1);
+                    $$ = new AST(arr.getVal($3));
+                }else {
+                    printf("Variable not found.");
+                }
+
+           }
            | ID '[' fn_call ']' {}/* array type a[get_index()] */
            ;   
                

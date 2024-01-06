@@ -3,31 +3,26 @@ USRDEF
 class MyFirstClass {
     int myVar;
     float myFloatVar;
-    int abc[] = [6, 7, 8];
-    char def[] = ['c'];
 
     fn int myFunction() {
         int var1;
         return var1;
-
     }
 };
 
 class MySecondClass {
-    bool myBoolVar = false;
+    bool myBoolVar;
     const int myConstVar = 10;
     fn bool computeValue(int param) {
         bool a;
         a = 20 + 5 < 4 - 1;
         return a;    
-        int ux[] = [6, 7, 8];
     }
 };
 
 GLOBALVAR
 const int globalInt;
 float globalFloat;
-int uxx[] = [6, 7, 8];
 
 GLOBALFUNC
 fn string globalFunction(const int param) {
@@ -36,21 +31,23 @@ fn string globalFunction(const int param) {
 }
 
 main {
-    
     class MyFirstClass object;
     globalFunction(globalInt);
     int c;
     c = 10;
     char character;
     character = 'v';
+    const char constanta = 'c';
     string str = "alalala";
     int b[] = [1, 2, 3, 4];
     float v[125];
-    v[15] = 1.6;
+    int i = 1;
+    v[i] = 1.6 + 2.7;
     char f[20];
-    f[1] = 'c';
+    f[i] = 'c';
     int u[] = [6, 7, 8];
-    int test = 20 + 6 - 20 / 4 + 2 % 1;
+    u[i] = 3;
+    int test = 20 + 6 - 20 / 4 + u[i];
     return 0;
 }
 EXIT
