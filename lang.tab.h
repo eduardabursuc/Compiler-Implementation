@@ -54,9 +54,9 @@ extern int yydebug;
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    ARRAY_ELEMENT = 258,           /* ARRAY_ELEMENT  */
-    CLASS_VAR = 259,               /* CLASS_VAR  */
-    CLASS_METHOD = 260,            /* CLASS_METHOD  */
+    VARS = 258,                    /* VARS  */
+    FUNCS = 259,                   /* FUNCS  */
+    CONSTRUCTS = 260,              /* CONSTRUCTS  */
     CLASS = 261,                   /* CLASS  */
     CONST = 262,                   /* CONST  */
     NEQ = 263,                     /* NEQ  */
@@ -77,24 +77,23 @@ extern int yydebug;
     EXIT = 278,                    /* EXIT  */
     MAIN = 279,                    /* MAIN  */
     FNENTRY = 280,                 /* FNENTRY  */
-    FNEXIT = 281,                  /* FNEXIT  */
-    BREAK = 282,                   /* BREAK  */
-    DEFAULT = 283,                 /* DEFAULT  */
-    USRDEF = 284,                  /* USRDEF  */
-    GLOBALVAR = 285,               /* GLOBALVAR  */
-    GLOBALFUNC = 286,              /* GLOBALFUNC  */
-    RETURN = 287,                  /* RETURN  */
-    PRINT = 288,                   /* PRINT  */
-    ID = 289,                      /* ID  */
-    TYPE = 290,                    /* TYPE  */
-    EVAL = 291,                    /* EVAL  */
-    TYPEOF = 292,                  /* TYPEOF  */
-    STRING = 293,                  /* STRING  */
-    INT = 294,                     /* INT  */
-    CHAR = 295,                    /* CHAR  */
-    FLOAT = 296,                   /* FLOAT  */
-    BOOL = 297,                    /* BOOL  */
-    EQ = 298                       /* EQ  */
+    BREAK = 281,                   /* BREAK  */
+    DEFAULT = 282,                 /* DEFAULT  */
+    USRDEF = 283,                  /* USRDEF  */
+    GLOBALVAR = 284,               /* GLOBALVAR  */
+    GLOBALFUNC = 285,              /* GLOBALFUNC  */
+    RETURN = 286,                  /* RETURN  */
+    PRINT = 287,                   /* PRINT  */
+    ID = 288,                      /* ID  */
+    TYPE = 289,                    /* TYPE  */
+    EVAL = 290,                    /* EVAL  */
+    TYPEOF = 291,                  /* TYPEOF  */
+    STRING = 292,                  /* STRING  */
+    INT = 293,                     /* INT  */
+    CHAR = 294,                    /* CHAR  */
+    FLOAT = 295,                   /* FLOAT  */
+    BOOL = 296,                    /* BOOL  */
+    EQ = 297                       /* EQ  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -114,7 +113,7 @@ union YYSTYPE
      class Parameter* param;
      class Variable* var;
 
-#line 118 "lang.tab.h"
+#line 117 "lang.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

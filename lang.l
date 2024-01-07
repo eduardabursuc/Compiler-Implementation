@@ -5,6 +5,9 @@
 
 %option noyywrap
 %%
+"Vars:" { return VARS; }
+"Methods:" { return FUNCS; }
+"Constructs:" { return CONSTRUCTS; }
 "ENTRY" { return ENTRY; }
 "EXIT" { return EXIT; }
 "USRDEF" { return USRDEF; }

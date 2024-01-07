@@ -1,23 +1,31 @@
 ENTRY
 USRDEF
 class MyFirstClass {
+    Vars:
     int myVar = 2;
     float myFloatVar;
-
+    Methods:
     fn int myFunction() {
         int var1;
         return var1;
     }
+    fn int testFunc(int param, const int param1) {
+        int abc;
+    }
+    Constructs:
 };
 
 class MySecondClass {
+    Vars:
     bool myBoolVar;
     const int myConstVar = 10;
+    Methods:
     fn bool computeValue(int param) {
         bool a;
         a = not ( 20 / 5 < 4 + 1 + myConstVar );
         return a;    
     }
+    Constructs:
 };
 
 GLOBALVAR

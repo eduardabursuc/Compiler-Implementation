@@ -1,35 +1,51 @@
 SYMBOL TABLE
 
 Variables List:
-Name: myVar, Type: int, Const?: [Not Const]
-Name: myFloatVar, Type: float, Const?: [Not Const]
-Name: var1, Type: int, Const?: [Not Const]
-Name: myBoolVar, Type: bool, Const?: [Not Const]
-Name: myConstVar, Type: int, Const?: [Const]
-Name: a, Type: bool, Const?: [Not Const]
-Name: globalInt, Type: int, Const?: [Const]
-Name: globalFloat, Type: float, Const?: [Not Const]
-Name: name, Type: string, Const?: [Not Const]
-Name: val, Type: int, Const?: [Not Const]
-Name: object, Type: MyFirstClass, Const?: [Not Const]
-Name: c, Type: int, Const?: [Not Const]
-Name: character, Type: char, Const?: [Not Const]
-Name: constanta, Type: char, Const?: [Const]
-Name: str, Type: string, Const?: [Not Const]
-Name: i, Type: int, Const?: [Not Const]
-Name: test, Type: int, Const?: [Not Const]
+Name: myVar, Type: int, Scope: MyFirstClass, Value: 2, Is Const?: NOT CONST
+Name: myFloatVar, Type: float, Scope: MyFirstClass, Is Const?: NOT CONST
+Name: var1, Type: int, Scope: myFunction, Is Const?: NOT CONST
+Name: abc, Type: int, Scope: testFunc, Is Const?: NOT CONST
+Name: myBoolVar, Type: bool, Scope: MySecondClass, Is Const?: NOT CONST
+Name: myConstVar, Type: int, Scope: MySecondClass, Value: 10, Is Const?: CONST
+Name: a, Type: bool, Scope: computeValue, Value: false, Is Const?: NOT CONST
+Name: globalInt, Type: int, Scope: global, Is Const?: CONST
+Name: globalFloat, Type: float, Scope: global, Is Const?: NOT CONST
+Name: name, Type: string, Scope: globalFunction, Is Const?: NOT CONST
+Name: val, Type: int, Scope: function, Is Const?: NOT CONST
+Name: object, Type: MyFirstClass, Scope: main, Is Const?: NOT CONST
+Name: c, Type: int, Scope: main, Value: 11, Is Const?: NOT CONST
+Name: character, Type: char, Scope: main, Value: v, Is Const?: NOT CONST
+Name: constanta, Type: char, Scope: main, Value: c, Is Const?: CONST
+Name: str, Type: string, Scope: main, String Value: alalala, Is Const?: NOT CONST
+Name: i, Type: int, Scope: main, Value: 1, Is Const?: NOT CONST
+Name: test, Type: int, Scope: main, Value: 18, Is Const?: NOT CONST
+Name: var, Type: MyFirstClass, Scope: main, Is Const?: NOT CONST
+
+Arrays List:
+Name: b, Type: int, Capacity: 4, Scope: main
+	Elements: 1 2 3 4 
+Name: v, Type: float, Capacity: 125, Scope: main
+	Elements: 4.3 
+Name: f, Type: char, Capacity: 20, Scope: main
+	Elements: c 
+Name: u, Type: int, Capacity: 3, Scope: main
+	Elements: 6 3 8 
 
 Functions List:
-Name: myFunction, Return Type: int
+Name: myFunction, Return Type: int, Scope: MyFirstClass
 	Parameters:
-Name: computeValue, Return Type: bool
+Name: testFunc, Return Type: int, Scope: MyFirstClass
 	Parameters:
-Name: globalFunction, Return Type: string
+Name: computeValue, Return Type: bool, Scope: MySecondClass
 	Parameters:
-		Name: param, Type: int, Const?: [Not Const]
-Name: function, Return Type: int
+		Name: param, Type: int, Is Const?: NOT CONST
+		Name: param1, Type: int, Is Const?: CONST
+Name: globalFunction, Return Type: string, Scope: global
 	Parameters:
-		Name: param, Type: int, Const?: [Const]
+		Name: param, Type: int, Is Const?: NOT CONST
+Name: function, Return Type: int, Scope: global
+	Parameters:
+		Name: param, Type: int, Is Const?: CONST
 
 User Defined Types List:
 Name: MyFirstClass

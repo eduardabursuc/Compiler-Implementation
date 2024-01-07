@@ -35,10 +35,11 @@ void yyerror(const char * s);
      class Variable* var;
 }
 
-%token ARRAY_ELEMENT CLASS_VAR CLASS_METHOD CLASS CONST
+%token VARS FUNCS CONSTRUCTS
+%token CLASS CONST
 %token NEQ GT GEQ LT LEQ AND OR NOT
 %token IF ELSE WHILE FOR SWITCH CASE
-%token ENTRY EXIT MAIN FNENTRY FNEXIT BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC RETURN PRINT
+%token ENTRY EXIT MAIN FNENTRY BREAK DEFAULT USRDEF GLOBALVAR GLOBALFUNC RETURN PRINT
 %token<string> ID TYPE EVAL TYPEOF STRING
 %token<integer> INT
 %token<character> CHAR
@@ -69,22 +70,37 @@ user_defined_types: /* define rules for user defined types */
                   | user_defined_types user_defined_type
                   ;
 
-user_defined_type: CLASS ID { scope = $2; } '{' field_variables field_functions '}' ';' {
+user_defined_type: CLASS ID { if(ids.existsClass($2)) {printf("Error at line %d: the class \"%s\" is already defined.\n", yylineno, $2); return 1;} scope = $2; 
                         UserDefinedType type($2);
-                        ids.addUsrDef(type);
+                        ids.addUsrDef(type);} 
+                        '{' VARS field_variables FUNCS field_functions CONSTRUCTS'}' ';' {
                         scope = "global";
 }
                  ;
 
 field_variables: /*empty*/ {}
                | field_variables variable_declaration {  }
+               | field_variables array_declaration { }
 	          ;
 
 field_functions: /*empty*/ { }
                | field_functions function_declaration { }
 	       ;
 
-function_declaration: FNENTRY TYPE ID  {    altscope = scope; 
+function_declaration: FNENTRY TYPE ID  {    altscope = scope;
+                                            int result = ids.existsFunc($3, altscope);
+                                            if( result == 1 ) {
+                                                printf("Error at line %d: the function \"%s\" is already defined inside this scope: %s.\n", yylineno, $3, altscope.c_str());
+                                                return 1;
+                                            }
+                                            else if ( result == 2 ) {
+                                                printf("Error at line %d: return type specification for constructor invalid.\n", yylineno);
+                                                return 1;
+                                            }
+                                            else if ( result == 3) {
+                                                printf("Error at line %d: %s already exists as a class variable or array.\n", yylineno, $3);
+                                                return 1;
+                                            }
                                             Function func($3, $2, globalParams, altscope); 
                                             ids.addFunc(func); 
                                             globalParams.clear();  
@@ -112,8 +128,25 @@ parameter_list:  {}
                ;
 
 
-parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));} 
+parameter: TYPE ID  { 
+            for(const auto &param: globalParams)
+            {
+                if(param.name == $2)
+                {
+                    printf("Error at line %d: parameter \"%s\" declared more than once for this function.\n", yylineno, $2);
+                    return 1;
+                }
+            }
+    globalParams.push_back(Parameter($2, $1));} 
          | CONST TYPE ID { 
+            for(const auto &param: globalParams)
+            {
+                if(param.name == $3)
+                {
+                    printf("Error at line %d: parameter \"%s\" declared more than once for this function.\n", yylineno, $3);
+                return 1;
+                }
+            }
             Parameter param($3, $2);
             param.isConst = true; 
             globalParams.push_back(param);
@@ -121,38 +154,72 @@ parameter: TYPE ID  { globalParams.push_back(Parameter($2, $1));}
         ;
 
 variable_declaration: TYPE ID ';' {
-                        if( ids.exists($2) ){
-                            printf("Variable already exists.");
+                        int result = ids.exists($2, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $2);
                             return 1;
-                        } else {
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else {
                             Value val($1);
                             Variable var($2, val);
                             var.scope = scope;
                             ids.addVar(var);
-                        }                        
+                        }
                     }
                     | TYPE ID '=' CHAR ';' {
                         string type = "char";
-                        if( ids.exists($2) ){
-                            printf("Variable already exists.");
+                        int result = ids.exists($2, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $2);
                             return 1;
-                        } else if ($1 == type){
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if ($1 == type){
                             Value val(type);
                             val.isCharSet = true;
                             val.charVal = $4;
                             Variable var($2, val);
                             var.scope = scope;
                             ids.addVar(var);
-                            printf("Expr value: %c", val.charVal);
                         }  else {
-                            printf("Different types.16");
+                            printf("Error at line %d: Different types.1\n", yylineno);
                             return 1;
                         }                     
                     }
                     | TYPE ID '=' STRING ';' {
                         string type = "string";
-                        if( ids.exists($2) ){
-                            printf("Variable already exists.");
+                        int result = ids.exists($2, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $2);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $2);
                             return 1;
                         } else if ($1 == type){
                             Value val(type);
@@ -162,13 +229,24 @@ variable_declaration: TYPE ID ';' {
                             var.scope = scope;
                             ids.addVar(var);
                         }  else {
-                            printf("Different types.15");
+                            printf("Error at line %d: Different types.2\n", yylineno);
                             return 1;
                         }                     
                     }
                     | TYPE ID '=' expression ';' {
-                        if ( ids.exists($2) ){
-                            printf("Variable already exists.");
+                       int result = ids.exists($2, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $2);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $2);
                             return 1;
                         }
                         if ($1 == $4->Eval().type) {
@@ -187,15 +265,27 @@ variable_declaration: TYPE ID ';' {
                             var.scope = scope;
                             ids.addVar(var);
                         } else {
-                            printf("Different types.");
+                            printf("Error at line %d: Different types.3\n", yylineno);
                             return 1;
                         }
                     } 
                     | CONST TYPE ID ';'  { 
-                        if ( ids.exists($3) ){
-                            printf("Variable already exists.");
+                        int result = ids.exists($3, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $3);
                             return 1;
-                        } else {
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $3);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $3);
+                            return 1;
+                        }
+                        else {
                             Value val($2);
                             val.isConst = true;
                             Variable var($3, val);
@@ -204,8 +294,19 @@ variable_declaration: TYPE ID ';' {
                         }
                     }
                     | CONST TYPE ID '=' expression ';'  { 
-                        if ( ids.exists($3) ){
-                            printf("Variable already exists.");
+                        int result = ids.exists($3, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $3);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $3);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $3);
                             return 1;
                         }
                         if ($2 == $5->TypeOf()) {
@@ -225,14 +326,25 @@ variable_declaration: TYPE ID ';' {
                             var.scope = scope;
                             ids.addVar(var);
                         } else {
-                            printf("Different types.13");
+                            printf("Error at line %d: Different types.4\n", yylineno);
                             return 1;
                         }
                         
                     }
                     | CONST TYPE ID '=' CHAR ';'  { 
-                        if ( ids.exists($3) ){
-                            printf("Variable already exists.");
+                        int result = ids.exists($3, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $3);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $3);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $3);
                             return 1;
                         }
                        string type = "char";
@@ -245,14 +357,25 @@ variable_declaration: TYPE ID ';' {
                             var.scope = scope;
                             ids.addVar(var);
                         } else {
-                            printf("Different types.12");
+                            printf("Error at line %d: Different types.5\n",yylineno);
                             return 1;
                         }
                         
                     }
                     | CONST TYPE ID '=' STRING ';'  { 
-                        if ( ids.exists($3) ){
-                            printf("Variable already exists.");
+                        int result = ids.exists($3, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $3);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $3);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $3);
                             return 1;
                         }
                         string type = "string";
@@ -265,7 +388,7 @@ variable_declaration: TYPE ID ';' {
                             var.scope = scope;
                             ids.addVar(var);
                         } else {
-                            printf("Different types.11");
+                            printf("Error at line %d: Different types.6\n",yylineno);
                             return 1;
                         }
                         
@@ -275,8 +398,24 @@ variable_declaration: TYPE ID ';' {
 
                                                         
 class_var_declaration: CLASS ID ID ';' {
-                            if ( ids.exists($3) ) {
-                                printf("Variable %s exists already.", $3);
+                            if(!ids.existsClass($2))
+                            {
+                                printf("Error at line %d: the class \"%s\" is not defined.\n", yylineno, $2);
+                                return 1;
+                            }
+                            int result = ids.exists($3, scope);
+                            if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $3);
+                            return 1;
+                            } 
+                            else if (result == 2)
+                            {
+                                printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $3);
+                                return 1;
+                            }
+                            else if (result == 3)
+                            {
+                                printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $3);
                                 return 1;
                             } else {
                                 Value val($2);
@@ -287,19 +426,35 @@ class_var_declaration: CLASS ID ID ';' {
                             
                      }
                      | CLASS ID ID '=' ID ';' { 
-                            if ( ids.exists($3)) {
-                                printf("Variable %s exists already.", $3);
+                            if(!ids.existsClass($2))
+                            {
+                                printf("Error at line %d: the class \"%s\" is not defined.\n", yylineno, $2);
+                                return 1;
+                            }
+                            int result = ids.exists($3, scope);
+                            if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $3);
+                            return 1;
+                            } 
+                            else if (result == 2)
+                            {
+                                printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $3);
+                                return 1;
+                            }
+                            else if (result == 3)
+                            {
+                                printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $3);
                                 return 1;
                             } else {
                                 
-                                if ( !ids.exists($5)) {
-                                printf("No %s variable found.", $5);
+                                if ( !ids.exists($5) ){
+                                printf("Error at line %d: No %s variable found.\n",yylineno, $5);
                                 return 1;
                                 }
                                 
                                 
                                 if( ids.getVar($5).Eval().type != $2) {
-                                    printf("Different types between %s and %s.\n", $3, $5);
+                                    printf("Error at line %d: Different types between %s and %s.\n",yylineno, $3, $5);
                                     return 1;
                                 }
                                 Value val($2);
@@ -311,20 +466,42 @@ class_var_declaration: CLASS ID ID ';' {
                      ;
                      
 array_declaration: TYPE ID '[' INT ']' ';' {
-                    if( ids.exists($2) ) {
-                        printf("Array already exists.");
-                        return 1;
-                    } else {
+                    int result = ids.exists($2, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $2);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $2);
+                            return 1;
+                        } else {
                         Array arr($2, $4, $1);
                         arr.scope = scope;
                         ids.addArr(arr);
                     }
                  }
                  | TYPE ID '[' ']' '=' '[' int_values ']' ';' {
-                    if( ids.exists($2) ) {
-                        printf("Array already exists.");
-                        return 1;
-                    } else {
+                   int result = ids.exists($2, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $2);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $2);
+                            return 1;
+                        } else {
                         Array arr($2, static_cast<int>(intVals.size()), $1);
                         
                         for (const auto &element : intVals) {
@@ -340,10 +517,21 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                     }
                  }
                  | TYPE ID '[' ']' '=' '[' float_values ']' ';' {
-                    if( ids.exists($2) ) {
-                        printf("Array already exists.");
-                        return 1;
-                    } else {
+                    int result = ids.exists($2, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $2);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $2);
+                            return 1;
+                        } else {
                         Array arr($2, static_cast<int>(floatVals.size()), $1);
                         
                         for (const auto &element : floatVals) {
@@ -358,10 +546,21 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                     }
                  }
                  | TYPE ID '[' ']' '=' '[' char_values ']' ';' {
-                    if( ids.exists($2) ) {
-                        printf("Array already exists.");
-                        return 1;
-                    } else {
+                   int result = ids.exists($2, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $2);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $2);
+                            return 1;
+                        } else {
                         Array arr($2, static_cast<int>(charVals.size()), $1);
                         
                         for (const auto &element : charVals) {
@@ -376,10 +575,21 @@ array_declaration: TYPE ID '[' INT ']' ';' {
                     }
                  }
                  | TYPE ID '[' ']' '=' '[' bool_values ']' ';' {
-                    if( ids.exists($2) ) {
-                        printf("Array already exists.");
-                        return 1;
-                    } else {
+                    int result = ids.exists($2, scope);
+                        if( result == 1 ){
+                            printf("Error at line %d: \"%s\" already exists as a variable or array in this scope.\n", yylineno, $2);
+                            return 1;
+                        } 
+                        else if (result == 2)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a function.\n", yylineno, $2);
+                            return 1;
+                        }
+                        else if (result == 3)
+                        {
+                            printf("Error at line %d: \"%s\" already exists as a user defined type.\n", yylineno, $2);
+                            return 1;
+                        } else {
                         Array arr($2, static_cast<int>(boolVals.size()), $1);
                         
                         for (const auto &element : boolVals) { 
@@ -427,47 +637,45 @@ statement: variable_declaration
          | RETURN expression ';' {
             if ( scope == "main" ) {
                 if ( $2->Eval().type != "int" ){
-                    printf("Error at returning a non integer in main scope.\n");
+                    printf("Error at line %d: Error at returning a non integer in main scope.\n", yylineno);
                     return 1;
                 }
 
             } else {
                 Function fn = ids.getFunc(scope.c_str());
                 if( fn.returnType != $2->Eval().type ){
-                    printf("Different returning types in function: %s.\n", fn.name.c_str());
+                    printf("Error at line %d: Different returning types in function: %s.\n", yylineno, fn.name.c_str());
                     return 1;
                 } 
             }
          }
          | RETURN STRING ';' {
             if ( scope == "main") {
-                printf("Error at returning a non integer in main scope.\n");
+                printf("Error at line %d: Error at returning a non integer in main scope.\n",yylineno);
                 return 1;
             } else {
                 Function fn = ids.getFunc(scope.c_str());
                 string type = "string";
                 if( fn.returnType != type ){
-                    printf("Different returning types in function: %s.\n", fn.name.c_str());
+                    printf("Error at line %d: Different returning types in function: %s.\n",yylineno, fn.name.c_str());
                     return 1;
                 }
             }
          }
          | RETURN CHAR ';' {
             if ( scope == "main") {
-                printf("Error at returning a non integer in main scope.\n");
+                printf("Error at line %d: Error at returning a non integer in main scope.\n",yylineno);
                 return 1;
             } else {
                 Function fn = ids.getFunc(scope.c_str());
                 string type = "char";
                 if( fn.returnType != type ){
-                    printf("Different returning types in function: %s.\n", fn.name.c_str());
+                    printf("Error at line %d: Different returning types in function: %s.\n",yylineno, fn.name.c_str());
                     return 1;
                 }
             }
          }
          ;
-
-
 
 assignment_statement: ID '=' expression ';' {
                         if( ids.exists($1) ) {
@@ -485,11 +693,11 @@ assignment_statement: ID '=' expression ';' {
                                     var.val.boolVal = result.boolVal;
                                 }
                             } else {
-                                printf("Different types.1");
+                                printf("Error at line %d: Different types.7\n", yylineno);
                                 return 1;
                             }        
                         } else {
-                            printf("Variable not found.");
+                            printf("Error at line %d: Variable not found.1", yylineno);
                             return 1;
                         }
                     }
@@ -501,12 +709,12 @@ assignment_statement: ID '=' expression ';' {
                                 var.val.isCharSet = true;
                                 var.val.charVal = $3;  
                             } else {
-                                printf("Different types.2");
+                                printf("Error at line %d: Different types.7", yylineno);
                                 return 1;
                             }   
 
                         } else {
-                            printf("Variable not found.");
+                            printf("Error at line %d: Variable not found.2",yylineno);
                             return 1;
                         }
                     }
@@ -518,12 +726,12 @@ assignment_statement: ID '=' expression ';' {
                                 var.val.isStringSet = true;
                                 var.val.stringVal = $3;  
                             } else {
-                                printf("Different types.3");
+                                printf("Error at line %d: Different types.8", yylineno);
                                 return 1;
                             }   
 
                         } else {
-                            printf("Variable not found.");
+                            printf("Error at line %d: Variable not found.3", yylineno);
                             return 1;
                         }
                     }
@@ -536,12 +744,12 @@ assignment_statement: ID '=' expression ';' {
                             if (arr.type == result.type){
                                 arr.add($3, result);
                             } else {
-                                printf("Different types.4");
+                                printf("Error at line %d: Different types.9",yylineno);
                                 return 1;
                             }   
 
                         } else {
-                            printf("Variable not found.");
+                            printf("Error at line %d: Variable not found.4",yylineno);
                             return 1;
                         }
                     }
@@ -555,12 +763,12 @@ assignment_statement: ID '=' expression ';' {
                                 val.type = "char";
                                 arr.add($3, val);
                             } else {
-                                printf("Different types.5");
+                                printf("Error at line %d: Different types.10", yylineno);
                                 return 1;
                             }   
 
                         } else {
-                            printf("Variable not found.");
+                            printf("Error at line %d: Variable not found.5", yylineno);
                             return 1;
                         }
                     }
@@ -572,12 +780,12 @@ assignment_statement: ID '=' expression ';' {
                             if (arr.type == result.type && val.type == "int"){
                                 arr.add(val.intVal, result);
                             } else {
-                                printf("Different types.");
+                                printf("Error at line %d: Different types.11", yylineno);
                                 return 1;
                             }   
 
                         } else {
-                            printf("Variable not found.");
+                            printf("Error at line %d: Variable not found.6", yylineno);
                             return 1;
                         }
                     }
@@ -593,12 +801,12 @@ assignment_statement: ID '=' expression ';' {
                                 v.type = "char";
                                 arr.add(val.intVal, v);
                             } else {
-                                printf("Different types.7");
+                                printf("Error at line %d: Different types.12",yylineno);
                                 return 1;
                             }   
 
                         } else {
-                            printf("Variable not found.");
+                            printf("Error at line %d: Variable not found.7");
                             return 1;
                         }
                     }
@@ -640,7 +848,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "+", $3); 
                else{
-                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
 
@@ -649,7 +857,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "-", $3); 
                else {
-                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());
+                    printf("Error at line %d: Different types between: %s and %s", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());
                     return 1;
                }
            }
@@ -657,7 +865,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "/", $3); 
                else {
-                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -665,7 +873,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "*", $3); 
                else {
-                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -673,7 +881,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "%", $3); 
                else {
-                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
                     
@@ -697,7 +905,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     Value val = ids.getVar($1).Eval();
                     $$ = new AST(val);
                 } else {
-                    printf("Variable not found.4");
+                    printf("Error at line %d: Variable not found.9", yylineno);
                     return 1;
                 }
            }
@@ -711,16 +919,16 @@ arithm_expr: arithm_expr '+' arithm_expr {
                         if( var.scope == obj.val.type ){
                             $$ = new AST(var.val);
                         } else {
-                            printf("No %s member in class %s.", $3, $1);
+                            printf("Error at line %d: No %s member in class %s.",yylineno, $3, $1);
                             return 0;
                         }
                              
                     } else {
-                         printf("No %s member in class %s.", $3, $1);
+                         printf("Error at line %d: No %s member in class %s.",yylineno, $3, $1);
                          return 0;
                     }
                 } else {
-                    printf("Class %s not found.", $1);
+                    printf("Error at line %d: Class %s not found.",yylineno, $1);
                     return 1;
                 }
            } 
@@ -733,13 +941,13 @@ arithm_expr: arithm_expr '+' arithm_expr {
                         if( obj.val.type == fn.scope ){
                             $$ = new AST($3->val);
                         } else {
-                            printf("No %s method found in class variable %s.", $3->name.c_str(), $1);
+                            printf("Error at line %d: No %s method found in class variable %s.", yylineno, $3->name.c_str(), $1);
                             return 0;
                         }
                     
                 } else {
 
-                    printf("Variable %s not found.\n", $1);
+                    printf("Error at line %d: Variable %s not found.\n",yylineno, $1);
                     return 1;
 
                 }
@@ -751,10 +959,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     if( val.type == "int" )
                         $$ = new AST(arr.getVal(val.intVal));
                     else {
-                        printf("Invalid index.");
+                        printf("Error at line %d: Invalid index.", yylineno);
                     }
                 } else {
-                    printf("Variable not found.2");
+                    printf("Error at line %d: Variable not found.10", yylineno);
                     return 1;
                 }
            }
@@ -763,7 +971,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     Array arr = ids.getArray($1);
                     $$ = new AST(arr.getVal($3));
                 }else {
-                    printf("Variable not found.1");
+                    printf("Error at line %d: Variable not found.11", yylineno);
                 }
 
            }
@@ -774,10 +982,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     if( $3->val.type == "int" )
                         $$ = new AST(arr.getVal($3->val.intVal));
                     else {
-                        printf("Invalid index.");
+                        printf("Error at line %d: Invalid index.", yylineno);
                     }
                 } else {
-                    printf("Variable not found.2");
+                    printf("Error at line %d: Variable not found.12", yylineno);
                     return 1;
                 }
            }
@@ -804,7 +1012,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "gt", $3); 
                else {
-                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -812,7 +1020,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "lt", $3); 
                else{
-                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -820,7 +1028,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "geq", $3); 
                else {
-                    printf("Different types between: %s and %s", $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -828,7 +1036,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "leq", $3); 
                else {
-                    printf("Different types.9\n");
+                    printf("Error at line %d: Different types.\n", yylineno);
                     return 1;
                }
                     
@@ -837,7 +1045,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "eq", $3); 
                else {
-                    printf("Different types.10\n");
+                    printf("Error at line %d: Different types.\n", yylineno);
                     return 1;
                }
            }
@@ -845,7 +1053,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "neq", $3); 
                else {
-                    printf("Different types.11\n");
+                    printf("Error at line %d: Different types.\n", yylineno);
                     return 1;
                }
            }
@@ -858,12 +1066,12 @@ fn_call: ID '(' argument_list ')' {
                 Function fn = ids.getFunc($1);
 
                 if ( params.size() != fn.params.size() ){
-                    printf("The %s function call has inapropriate number of parameters.\n", fn.name.c_str());
+                    printf("Error at line %d: The %s function call has inapropriate number of parameters.\n", yylineno, fn.name.c_str());
                     return 1;
                 } else {
                     for( int i = 0; i < params.size(); i++ ) {
                         if (params.at(i).type != fn.params.at(i).type){
-                            printf("The parameter .... should be of type %s.\n", fn.params.at(i).type.c_str());
+                            printf("Error at line %d: The parameter .... should be of type %s.\n", yylineno, fn.params.at(i).type.c_str());
                             return 1;
                         }
                     }
@@ -910,10 +1118,10 @@ int main(int argc, char** argv) {
     yyin = fopen(argv[1], "r");
     yyparse();
 
-    ids.printVars();
+    /* ids.printVars();
     ids.printFuncs();
     ids.printUsrDefs();
-    ids.printArrays();
+    ids.printArrays(); */
     ids.exportToFile("symbol_table.txt");
     return 0;
 }
