@@ -13,6 +13,7 @@ class MyFirstClass {
         int abc;
     }
     Constructs:
+    MyFirstClass() {}
 };
 
 class MySecondClass {
@@ -33,7 +34,7 @@ const int globalInt;
 float globalFloat;
 
 GLOBALFUNC
-fn string globalFunction(const int param) {
+fn string globalFunction(const int param2) {
     string name;
     return name;
 }

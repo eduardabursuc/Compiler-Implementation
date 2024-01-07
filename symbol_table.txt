@@ -36,16 +36,19 @@ Name: myFunction, Return Type: int, Scope: MyFirstClass
 	Parameters:
 Name: testFunc, Return Type: int, Scope: MyFirstClass
 	Parameters:
+		Name: param, Type: int, Is Const?: NOT CONST
+		Name: param1, Type: int, Is Const?: CONST
+Name: MyFirstClass, Return Type: none (CONSTRUCTOR), Scope: MyFirstClass
+	Parameters:
 Name: computeValue, Return Type: bool, Scope: MySecondClass
 	Parameters:
 		Name: param, Type: int, Is Const?: NOT CONST
-		Name: param1, Type: int, Is Const?: CONST
 Name: globalFunction, Return Type: string, Scope: global
 	Parameters:
-		Name: param, Type: int, Is Const?: NOT CONST
+		Name: param2, Type: int, Is Const?: CONST
 Name: function, Return Type: int, Scope: global
 	Parameters:
-		Name: param, Type: int, Is Const?: CONST
+		Name: val, Type: int, Is Const?: NOT CONST
 
 User Defined Types List:
 Name: MyFirstClass

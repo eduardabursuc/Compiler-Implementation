@@ -116,8 +116,8 @@ public:
     string returnType;
     string scope;
     vector<Parameter> params;
-    Function(const string &name, const string &returnType, const vector<Parameter> &params, const string &scope)
-        : name(name), returnType(returnType), params(params), scope(scope) {}
+    Function(const string &name, const string &returnType, const string &scope)
+        : name(name), returnType(returnType), scope(scope) {}
 };
 
 class UserDefinedType
@@ -288,7 +288,7 @@ public:
             if (func.name == name)
                 return func;
 
-        throw std::runtime_error("Variable not found: " + std::string(name));
+        throw std::runtime_error("Function not found: " + std::string(name));
     }
 
     UserDefinedType &getUDT(const char *name)
@@ -296,6 +296,8 @@ public:
         for (auto &udt : usrdefs)
             if (udt.name == name)
                 return udt;
+
+        throw std::runtime_error("Class not found: " + std::string(name));
     }
 
     Array &getArray(const char *name)
@@ -303,7 +305,7 @@ public:
         for (auto &array : arrays)
             if (array.name == name)
                 return array;
-        throw std::runtime_error("Variable not found: " + std::string(name));
+        throw std::runtime_error("Array not found: " + std::string(name));
     }
 
     void addVar(const Variable &var)

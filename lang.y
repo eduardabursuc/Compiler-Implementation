@@ -73,7 +73,7 @@ user_defined_types: /* define rules for user defined types */
 user_defined_type: CLASS ID { if(ids.existsClass($2)) {printf("Error at line %d: the class \"%s\" is already defined.\n", yylineno, $2); return 1;} scope = $2; 
                         UserDefinedType type($2);
                         ids.addUsrDef(type);} 
-                        '{' VARS field_variables FUNCS field_functions CONSTRUCTS'}' ';' {
+                        '{' VARS field_variables FUNCS field_functions CONSTRUCTS field_constructors'}' ';' {
                         scope = "global";
 }
                  ;
@@ -101,16 +101,42 @@ function_declaration: FNENTRY TYPE ID  {    altscope = scope;
                                                 printf("Error at line %d: %s already exists as a class variable or array.\n", yylineno, $3);
                                                 return 1;
                                             }
-                                            Function func($3, $2, globalParams, altscope); 
+                                            Function func($3, $2, altscope); 
                                             ids.addFunc(func); 
-                                            globalParams.clear();  
                                             scope = $3; 
                                         } 
-                        '(' parameter_list ')' '{' block '}' {                                          
+                        '(' parameter_list ')' '{' block '}' {
+                                            Function &func = ids.getFunc(scope.c_str());
+                                            func.params = globalParams;
+                                            globalParams.clear();  
                                             scope = altscope;
                         } 
                         ;
-	       
+
+field_constructors: { }
+                  | field_constructors constructor_declaration { }
+              ;
+
+constructor_declaration: ID {               if (strcmp($1, scope.c_str())!= 0)
+                                            {
+                                                printf("Error at line %d: the constructor should have the same name as the class\n", yylineno, $1);
+                                                return 1;
+                                            }
+                                            altscope = scope;
+                                            Function func($1, "none (CONSTRUCTOR)", altscope); 
+                                            ids.addFunc(func); 
+                                            scope = $1; 
+                            }
+                            '(' parameter_list ')' '{' constructor_block '}' { 
+                                Function &func = ids.getFunc(scope.c_str());
+                                func.params = globalParams;
+                                globalParams.clear();
+                                scope = altscope; } 
+                        ;
+
+constructor_block : block
+                  | {}
+                  ;
 
 global_variables: 
                   | global_variables variable_declaration
