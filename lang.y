@@ -119,7 +119,7 @@ field_constructors: { }
 
 constructor_declaration: ID {               if (strcmp($1, scope.c_str())!= 0)
                                             {
-                                                printf("Error at line %d: the constructor should have the same name as the class\n", yylineno, $1);
+                                                printf("Error at line %d: the constructor should have the same name as the class\n", yylineno);
                                                 return 1;
                                             }
                                             altscope = scope;
@@ -701,13 +701,15 @@ statement: variable_declaration
                 }
             }
          }
+         | TYPEOF '(' ID ')' ';' {}
          ;
 
 assignment_statement: ID '=' expression ';' {
                         if( ids.exists($1) ) {
                             Value result = $3->Eval();
                             Variable& var = ids.getVar($1);
-                            if (var.val.type == $3->TypeOf()){
+                            if (var.scope == scope || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                if (var.val.type == $3->TypeOf()){
                                 if (var.val.type == "int") {
                                     var.val.isIntSet = true;
                                     var.val.intVal = result.intVal;
@@ -719,9 +721,13 @@ assignment_statement: ID '=' expression ';' {
                                     var.val.boolVal = result.boolVal;
                                 }
                             } else {
-                                printf("Error at line %d: Different types.7\n", yylineno);
+                                printf("Error at line %d: Different types.\n", yylineno);
                                 return 1;
-                            }        
+                            } 
+                            } else {
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
+                                return 1;
+                            }                   
                         } else {
                             printf("Error at line %d: Variable not found.1", yylineno);
                             return 1;
@@ -731,13 +737,18 @@ assignment_statement: ID '=' expression ';' {
                         if( ids.exists($1) ) {
 
                             Variable& var = ids.getVar($1);
-                            if (var.val.type == "char"){
-                                var.val.isCharSet = true;
-                                var.val.charVal = $3;  
+                            if (var.scope == scope || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                if (var.val.type == "char"){
+                                    var.val.isCharSet = true;
+                                    var.val.charVal = $3;  
+                                } else {
+                                    printf("Error at line %d: Different types.7", yylineno);
+                                    return 1;
+                                }  
                             } else {
-                                printf("Error at line %d: Different types.7", yylineno);
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
                                 return 1;
-                            }   
+                            } 
 
                         } else {
                             printf("Error at line %d: Variable not found.2",yylineno);
@@ -746,34 +757,39 @@ assignment_statement: ID '=' expression ';' {
                     }
                     | ID '=' STRING ';' {
                         if( ids.exists($1) ) {
-
                             Variable& var = ids.getVar($1);
-                            if (var.val.type == "string"){
-                                var.val.isStringSet = true;
-                                var.val.stringVal = $3;  
+                            if (var.scope == scope || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                if (var.val.type == "string"){
+                                    var.val.isStringSet = true;
+                                    var.val.stringVal = $3;  
+                                } else {
+                                    printf("Error at line %d: Different types.8", yylineno);
+                                    return 1;
+                                }  
                             } else {
-                                printf("Error at line %d: Different types.8", yylineno);
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
                                 return 1;
-                            }   
-
+                            }
                         } else {
                             printf("Error at line %d: Variable not found.3", yylineno);
                             return 1;
                         }
                     }
                     | ID '[' INT ']' '=' expression ';' {
-
                         Value result = $6->Eval();
-                        if( ids.exists($1) ) {
-                            
+                        if( ids.exists($1) ) {   
                             Array& arr = ids.getArray($1);
-                            if (arr.type == result.type){
-                                arr.add($3, result);
+                            if (arr.scope == scope || arr.scope == "global" || (ids.exists(scope.c_str()) && arr.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                if (arr.type == result.type){
+                                    arr.add($3, result);
+                                } else {
+                                    printf("Error at line %d: Different types.9",yylineno);
+                                    return 1;
+                                }   
                             } else {
-                                printf("Error at line %d: Different types.9",yylineno);
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
                                 return 1;
-                            }   
-
+                            }
                         } else {
                             printf("Error at line %d: Variable not found.4",yylineno);
                             return 1;
@@ -782,16 +798,21 @@ assignment_statement: ID '=' expression ';' {
                     | ID '[' INT ']' '=' CHAR ';' {
                         if( ids.exists($1)) {
                             Array& arr = ids.getArray($1);
-                            if (arr.type == "char"){
-                                Value val("char");
-                                val.charVal = $6;
-                                val.isCharSet = true;
-                                val.type = "char";
-                                arr.add($3, val);
+                            if (arr.scope == scope || arr.scope == "global" || (ids.exists(scope.c_str()) && arr.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                if (arr.type == "char"){
+                                    Value val("char");
+                                    val.charVal = $6;
+                                    val.isCharSet = true;
+                                    val.type = "char";
+                                    arr.add($3, val);
+                                } else {
+                                    printf("Error at line %d: Different types.10", yylineno);
+                                    return 1;
+                                } 
                             } else {
-                                printf("Error at line %d: Different types.10", yylineno);
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
                                 return 1;
-                            }   
+                            }  
 
                         } else {
                             printf("Error at line %d: Variable not found.5", yylineno);
@@ -802,13 +823,18 @@ assignment_statement: ID '=' expression ';' {
                         Value result = $6->Eval();
                         if( ids.exists($1) && ids.exists($3)) {
                             Array& arr = ids.getArray($1);
-                            Value& val = ids.getVar($3).val;
-                            if (arr.type == result.type && val.type == "int"){
-                                arr.add(val.intVal, result);
+                            if (arr.scope == scope || arr.scope == "global" || (ids.exists(scope.c_str()) && arr.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                Value& val = ids.getVar($3).val;
+                                if (arr.type == result.type && val.type == "int"){
+                                    arr.add(val.intVal, result);
+                                } else {
+                                    printf("Error at line %d: Different types.11", yylineno);
+                                    return 1;
+                                }  
                             } else {
-                                printf("Error at line %d: Different types.11", yylineno);
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
                                 return 1;
-                            }   
+                            }  
 
                         } else {
                             printf("Error at line %d: Variable not found.6", yylineno);
@@ -819,20 +845,100 @@ assignment_statement: ID '=' expression ';' {
 
                         if( ids.exists($1) && ids.exists($3)) {
                             Array& arr = ids.getArray($1);
-                            Value& val = ids.getVar($3).val;
-                            if (arr.type == "char" && val.type == "int"){
-                                Value v("char");
-                                v.charVal = $6;
-                                v.isCharSet = true;
-                                v.type = "char";
-                                arr.add(val.intVal, v);
+                            if (arr.scope == scope  || arr.scope == "global" || (ids.exists(scope.c_str()) && arr.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                Value& val = ids.getVar($3).val;
+                                if (arr.type == "char" && val.type == "int"){
+                                    Value v("char");
+                                    v.charVal = $6;
+                                    v.isCharSet = true;
+                                    v.type = "char";
+                                    arr.add(val.intVal, v);
+                                } else {
+                                    printf("Error at line %d: Different types.12",yylineno);
+                                    return 1;
+                                }
                             } else {
-                                printf("Error at line %d: Different types.12",yylineno);
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
                                 return 1;
-                            }   
+                            }  
 
                         } else {
-                            printf("Error at line %d: Variable not found.7");
+                            printf("Error at line %d: Variable not found.\n", yylineno);
+                            return 1;
+                        }
+                    }
+                    | ID '.' ID '=' expression';' {
+                        if ( ids.exists($1) && ids.exists($3) && ids.getVar($3).scope == ids.getVar($1).val.type ){
+                            Value result = $5->Eval();
+                            Variable& var = ids.getVar($1);
+                            if (var.scope == scope  || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                Variable& var = ids.getVar($3);
+                                if (var.val.type == $5->TypeOf()){
+                                if (var.val.type == "int") {
+                                    var.val.isIntSet = true;
+                                    var.val.intVal = result.intVal;
+                                } else if (var.val.type == "float") {
+                                    var.val.isFloatSet = true;
+                                    var.val.floatVal = result.floatVal;
+                                } else if (var.val.type == "bool") {
+                                    var.val.isBoolSet = true;
+                                    var.val.boolVal = result.boolVal;
+                                }
+                            } else {
+                                printf("Error at line %d: Different types.\n", yylineno);
+                                return 1;
+                            } 
+                            } else {
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
+                                return 1;
+                            } 
+                        } else {
+                            printf("Error at line %d: Variable not found.\n", yylineno);
+                            return 1;
+                        }
+
+                    }
+                    | ID '.' ID '=' CHAR';' {
+                        if ( ids.exists($1) && ids.exists($3) && ids.getVar($3).scope == ids.getVar($1).val.type ){
+                            Variable& var = ids.getVar($1);
+                            if (var.scope == scope || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                Variable& var = ids.getVar($3);
+                                if (var.val.type == "char"){
+                                    var.val.charVal = $5;
+                                    var.val.isCharSet = true;
+                                } else {
+                                    printf("Error at line %d: Different types.\n", yylineno);
+                                return 1;
+                                }
+
+                            } else {
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
+                                return 1;
+                            } 
+                        } else {
+                            printf("Error at line %d: Variable not found.\n", yylineno);
+                            return 1;
+                        }
+                    }
+                    | ID '.' ID '=' STRING ';' {
+                        if ( ids.exists($1) && ids.exists($3) && ids.getVar($3).scope == ids.getVar($1).val.type ){
+                            Variable& var = ids.getVar($1);
+                            if (var.scope == scope || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope) ) {
+                                Variable& var = ids.getVar($3);
+                                if (var.val.type == "string"){
+                                    var.val.stringVal = $5;
+                                    var.val.isStringSet = true;
+                                } else {
+                                    printf("Error at line %d: Different types.\n", yylineno);
+                                return 1;
+                                }
+                                
+                            } else {
+                                printf("Error at line %d: Variable not found in this scope.\n", yylineno);
+                                return 1;
+                            } 
+                        } else {
+                            printf("Error at line %d: Variable not found.\n", yylineno);
                             return 1;
                         }
                     }
@@ -872,9 +978,10 @@ expression: arithm_expr { $$ = $1; }
         
 arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
-                   $$ = new AST($1, "+", $3); 
+                $$ = new AST($1, "+", $3);                
+                   
                else{
-                    printf("Error at line %d: Different types between: %s and %s", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s.\n", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
 
@@ -883,7 +990,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "-", $3); 
                else {
-                    printf("Error at line %d: Different types between: %s and %s", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());
+                    printf("Error at line %d: Different types between: %s and %s.\n", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());
                     return 1;
                }
            }
@@ -891,7 +998,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "/", $3); 
                else {
-                    printf("Error at line %d: Different types between: %s and %s", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s.\n", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -899,7 +1006,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "*", $3); 
                else {
-                    printf("Error at line %d: Different types between: %s and %s", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s.\n", yylineno,$1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -907,7 +1014,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "%", $3); 
                else {
-                    printf("Error at line %d: Different types between: %s and %s", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s.\n", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
                     
@@ -928,41 +1035,53 @@ arithm_expr: arithm_expr '+' arithm_expr {
             }
            | ID {
                 if( ids.exists($1) ) {
-                    Value val = ids.getVar($1).Eval();
-                    $$ = new AST(val);
+                    Variable var = ids.getVar($1);
+                    if (var.scope == scope || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope)){
+                        Value val = var.Eval();
+                        $$ = new AST(val);
+                    }else {
+                        printf("Error at line %d: Variable not found in this scope.\n", yylineno);
+                        return 1;
+                    }
+                    
                 } else {
-                    printf("Error at line %d: Variable not found.9", yylineno);
+                    printf("Error at line %d: Variable not found.\n", yylineno);
                     return 1;
                 }
            }
            | ID '.' ID { 
                 if( ids.exists($1) ) {
-                    if( ids.exists($3) ) {
-
-                        Variable var = ids.getVar($3);
-                        Variable obj = ids.getVar($1);
-
-                        if( var.scope == obj.val.type ){
-                            $$ = new AST(var.val);
+                    Variable obj = ids.getVar($1);
+                    if (obj.scope == scope || obj.scope == "global" || (ids.exists(scope.c_str()) && obj.scope == ids.getFunc(scope.c_str()).scope)){
+                        if( ids.exists($3) ) {
+                            Variable var = ids.getVar($3);
+                            if( var.scope == obj.val.type ){
+                                $$ = new AST(var.val);
+                            } else {
+                                printf("Error at line %d: No %s member in class %s.\n",yylineno, $3, $1);
+                                return 0;
+                            }
+                                
                         } else {
-                            printf("Error at line %d: No %s member in class %s.",yylineno, $3, $1);
+                            printf("Error at line %d: No %s member in class %s.\n",yylineno, $3, $1);
                             return 0;
                         }
-                             
+
                     } else {
-                         printf("Error at line %d: No %s member in class %s.",yylineno, $3, $1);
-                         return 0;
+                        printf("Error at line %d: Variable not found in this scope.\n", yylineno);
+                        return 1;
                     }
                 } else {
-                    printf("Error at line %d: Class %s not found.",yylineno, $1);
+                    printf("Error at line %d: Class %s not found.\n",yylineno, $1);
                     return 1;
                 }
            } 
            | ID '.' fn_call {
                 if( ids.exists($1) ) {
-                    
                     Variable obj = ids.getVar($1);
-                    Function fn = ids.getFunc($3->name.c_str());
+                    if (obj.scope == scope || obj.scope == "global" || (ids.exists(scope.c_str()) && obj.scope == ids.getFunc(scope.c_str()).scope)){
+
+                        Function fn = ids.getFunc($3->name.c_str());
 
                         if( obj.val.type == fn.scope ){
                             $$ = new AST($3->val);
@@ -970,6 +1089,11 @@ arithm_expr: arithm_expr '+' arithm_expr {
                             printf("Error at line %d: No %s method found in class variable %s.", yylineno, $3->name.c_str(), $1);
                             return 0;
                         }
+                        
+                    } else {
+                        printf("Error at line %d: Variable not found in this scope.\n", yylineno);
+                        return 1;
+                    }
                     
                 } else {
 
@@ -981,37 +1105,49 @@ arithm_expr: arithm_expr '+' arithm_expr {
            | ID '[' ID ']' {
                 if( ids.exists($1) && ids.exists($3)) {
                     Array arr = ids.getArray($1);
-                    Value val = ids.getVar($3).Eval();
-                    if( val.type == "int" )
-                        $$ = new AST(arr.getVal(val.intVal));
-                    else {
-                        printf("Error at line %d: Invalid index.", yylineno);
+                    if (arr.scope == scope || arr.scope == "global" || (ids.exists(scope.c_str()) && arr.scope == ids.getFunc(scope.c_str()).scope)){
+                        Value val = ids.getVar($3).Eval();
+                        if( val.type == "int" )
+                            $$ = new AST(arr.getVal(val.intVal));
+                        else {
+                            printf("Error at line %d: Invalid index type.\n", yylineno);
+                        }
+                    } else {
+                        printf("Error at line %d: Variable not found in this scope.\n", yylineno);
+                        return 1;
                     }
                 } else {
-                    printf("Error at line %d: Variable not found.10", yylineno);
+                    printf("Error at line %d: Variable not found.\n", yylineno);
                     return 1;
                 }
            }
            | ID '[' INT ']' {
                 if( ids.exists($1) ) {
                     Array arr = ids.getArray($1);
-                    $$ = new AST(arr.getVal($3));
+                    if (arr.scope == scope || arr.scope == "global" || (ids.exists(scope.c_str()) && arr.scope == ids.getFunc(scope.c_str()).scope)){
+                        $$ = new AST(arr.getVal($3));
+                    } else {
+                        printf("Error at line %d: Variable not found in this scope.\n", yylineno);
+                        return 1;
+                    }
+                    
                 }else {
-                    printf("Error at line %d: Variable not found.11", yylineno);
+                    printf("Error at line %d: Variable not found.\n", yylineno);
                 }
 
            }
            | ID '[' fn_call ']' {
                 if( ids.exists($1)) {
                     Array arr = ids.getArray($1);
-
-                    if( $3->val.type == "int" )
-                        $$ = new AST(arr.getVal($3->val.intVal));
-                    else {
-                        printf("Error at line %d: Invalid index.", yylineno);
+                    if (arr.scope == scope || arr.scope == "global" || (ids.exists(scope.c_str()) && arr.scope == ids.getFunc(scope.c_str()).scope)){
+                        if( $3->val.type == "int" )
+                            $$ = new AST(arr.getVal($3->val.intVal));
+                        else {
+                            printf("Error at line %d: Invalid index type.\n", yylineno);
+                        }
                     }
                 } else {
-                    printf("Error at line %d: Variable not found.12", yylineno);
+                    printf("Error at line %d: Variable not found.\n", yylineno);
                     return 1;
                 }
            }

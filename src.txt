@@ -22,6 +22,7 @@ class MySecondClass {
     const int myConstVar = 10;
     Methods:
     fn bool computeValue(int param) {
+        myBoolVar = true;
         bool a;
         a = not ( 20 / 5 < 4 + 1 + myConstVar );
         return a;    
@@ -46,6 +47,7 @@ fn int function(int val) {
 
 main {
     class MyFirstClass object;
+    object.myVar = 3;
     globalFunction(globalInt);
     int c = 0;
     if c > 0 {
@@ -60,9 +62,9 @@ main {
     string str = "alalala";
     int b[] = [1, 2, 3, 4];
     float v[125];
-    int i = 1;
-    v[i] = 1.6 + 2.7;
+    int i = 1; 
     char f[20];
+    v[i] = 1.6 + 2.7;
     f[i] = 'c';
     int u[] = [6, 7, 8];
     u[i] = 3;

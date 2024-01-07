@@ -1,11 +1,11 @@
 SYMBOL TABLE
 
 Variables List:
-Name: myVar, Type: int, Scope: MyFirstClass, Value: 2, Is Const?: NOT CONST
+Name: myVar, Type: int, Scope: MyFirstClass, Value: 3, Is Const?: NOT CONST
 Name: myFloatVar, Type: float, Scope: MyFirstClass, Is Const?: NOT CONST
 Name: var1, Type: int, Scope: myFunction, Is Const?: NOT CONST
 Name: abc, Type: int, Scope: testFunc, Is Const?: NOT CONST
-Name: myBoolVar, Type: bool, Scope: MySecondClass, Is Const?: NOT CONST
+Name: myBoolVar, Type: bool, Scope: MySecondClass, Value: true, Is Const?: NOT CONST
 Name: myConstVar, Type: int, Scope: MySecondClass, Value: 10, Is Const?: CONST
 Name: a, Type: bool, Scope: computeValue, Value: false, Is Const?: NOT CONST
 Name: globalInt, Type: int, Scope: global, Is Const?: CONST
