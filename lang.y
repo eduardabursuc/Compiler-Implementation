@@ -54,7 +54,7 @@ void yyerror(const char * s);
 
 %left '+' '-'
 %left '*' '/' '%' 
-
+%left '(' ')'
 %start program
 
 %type <ASTNode> arithm_expr bool_expr expression
@@ -711,7 +711,7 @@ statement: variable_declaration
             } else if( result.type == "float" ) {
                 printf("[Line : %d]Value of expression is %f.\n",yylineno, result.floatVal);
             } else if( result.type == "char" ) {
-                printf("[Line : %d]Value of expression is %c.\n",yylineno, result.intVal);
+                printf("[Line : %d]Value of expression is %c.\n",yylineno, result.charVal);
             } else if( result.type == "bool" ) {
                     if( result.boolVal ){
                         printf("[Line : %d]Value of expression is true.\n",yylineno);
@@ -748,7 +748,7 @@ assignment_statement: ID '=' expression ';' {
                                 return 1;
                             }                   
                         } else {
-                            printf("Error at line %d: Variable not found.1", yylineno);
+                            printf("Error at line %d: Variable not found.1\n", yylineno);
                             return 1;
                         }
                     }
@@ -761,7 +761,7 @@ assignment_statement: ID '=' expression ';' {
                                     var.val.isCharSet = true;
                                     var.val.charVal = $3;  
                                 } else {
-                                    printf("Error at line %d: Different types.7", yylineno);
+                                    printf("Error at line %d: Different types.7\n", yylineno);
                                     return 1;
                                 }  
                             } else {
@@ -770,7 +770,7 @@ assignment_statement: ID '=' expression ';' {
                             } 
 
                         } else {
-                            printf("Error at line %d: Variable not found.2",yylineno);
+                            printf("Error at line %d: Variable not found.2\n",yylineno);
                             return 1;
                         }
                     }
@@ -782,7 +782,7 @@ assignment_statement: ID '=' expression ';' {
                                     var.val.isStringSet = true;
                                     var.val.stringVal = $3;  
                                 } else {
-                                    printf("Error at line %d: Different types.8", yylineno);
+                                    printf("Error at line %d: Different types.8\n", yylineno);
                                     return 1;
                                 }  
                             } else {
@@ -790,7 +790,7 @@ assignment_statement: ID '=' expression ';' {
                                 return 1;
                             }
                         } else {
-                            printf("Error at line %d: Variable not found.3", yylineno);
+                            printf("Error at line %d: Variable not found.3\n", yylineno);
                             return 1;
                         }
                     }
@@ -802,7 +802,7 @@ assignment_statement: ID '=' expression ';' {
                                 if (arr.type == result.type){
                                     arr.add($3, result);
                                 } else {
-                                    printf("Error at line %d: Different types.9",yylineno);
+                                    printf("Error at line %d: Different types.9\n",yylineno);
                                     return 1;
                                 }   
                             } else {
@@ -810,7 +810,7 @@ assignment_statement: ID '=' expression ';' {
                                 return 1;
                             }
                         } else {
-                            printf("Error at line %d: Variable not found.4",yylineno);
+                            printf("Error at line %d: Variable not found.4\n",yylineno);
                             return 1;
                         }
                     }
@@ -825,7 +825,7 @@ assignment_statement: ID '=' expression ';' {
                                     val.type = "char";
                                     arr.add($3, val);
                                 } else {
-                                    printf("Error at line %d: Different types.10", yylineno);
+                                    printf("Error at line %d: Different types.10\n", yylineno);
                                     return 1;
                                 } 
                             } else {
@@ -834,7 +834,7 @@ assignment_statement: ID '=' expression ';' {
                             }  
 
                         } else {
-                            printf("Error at line %d: Variable not found.5", yylineno);
+                            printf("Error at line %d: Variable not found.5\n", yylineno);
                             return 1;
                         }
                     }
@@ -847,7 +847,7 @@ assignment_statement: ID '=' expression ';' {
                                 if (arr.type == result.type && val.type == "int"){
                                     arr.add(val.intVal, result);
                                 } else {
-                                    printf("Error at line %d: Different types.11", yylineno);
+                                    printf("Error at line %d: Different types.11\n", yylineno);
                                     return 1;
                                 }  
                             } else {
@@ -856,7 +856,7 @@ assignment_statement: ID '=' expression ';' {
                             }  
 
                         } else {
-                            printf("Error at line %d: Variable not found.6", yylineno);
+                            printf("Error at line %d: Variable not found.6\n", yylineno);
                             return 1;
                         }
                     }
@@ -873,7 +873,7 @@ assignment_statement: ID '=' expression ';' {
                                     v.type = "char";
                                     arr.add(val.intVal, v);
                                 } else {
-                                    printf("Error at line %d: Different types.12",yylineno);
+                                    printf("Error at line %d: Different types.12\n",yylineno);
                                     return 1;
                                 }
                             } else {
@@ -996,6 +996,10 @@ expression: arithm_expr { $$ = $1; }
  
         
 arithm_expr: arithm_expr '+' arithm_expr {
+               if($1->Eval().type == "bool" || $3->Eval().type == "bool"){
+                    printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
                if ($1->Eval().type == $3->Eval().type)
                 $$ = new AST($1, "+", $3);                
                    
@@ -1006,6 +1010,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
 
            }
            | arithm_expr '-' arithm_expr {
+                if($1->Eval().type == "bool" || $3->Eval().type == "bool"){
+                    printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "-", $3); 
                else {
@@ -1014,6 +1022,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
                }
            }
            | arithm_expr '/' arithm_expr {
+            if($1->Eval().type == "bool" || $3->Eval().type == "bool"){
+                    printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "/", $3); 
                else {
@@ -1022,6 +1034,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
                }
            }
            | arithm_expr '*' arithm_expr {
+            if($1->Eval().type == "bool" || $3->Eval().type == "bool"){
+                    printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "*", $3); 
                else {
@@ -1030,6 +1046,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
                }
            }
            | arithm_expr '%' arithm_expr {
+            if($1->Eval().type == "bool" || $3->Eval().type == "bool"){
+                    printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "%", $3); 
                else {
@@ -1198,7 +1218,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "gt", $3); 
                else {
-                    printf("Error at line %d: Different types between: %s and %s", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s\n", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -1206,7 +1226,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "lt", $3); 
                else{
-                    printf("Error at line %d: Different types between: %s and %s", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s\n", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -1214,7 +1234,7 @@ bool_expr: bool_expr AND bool_expr {
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "geq", $3); 
                else {
-                    printf("Error at line %d: Different types between: %s and %s", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
+                    printf("Error at line %d: Different types between: %s and %s\n", yylineno, $1->Eval().type.c_str(), $3->Eval().type.c_str());            
                     return 1;
                }
            }
@@ -1250,7 +1270,6 @@ fn_call: ID '(' argument_list ')' {
             
             if( ids.exists($1) ) {
                 Function fn = ids.getFunc($1);
-                printf("function: %s from: %s in: %s\n",$1,fn.scope.c_str(), scope.c_str());
                 if (fn.scope == scope || fn.scope == "global" || ids.existsVar(fn.scope.c_str(), scope) ){
                         if ( params.size() != fn.params.size() ){
                         printf("Error at line %d: The %s function call has inapropriate number of parameters.\n", yylineno, fn.name.c_str());
@@ -1258,7 +1277,7 @@ fn_call: ID '(' argument_list ')' {
                     } else {
                         for( int i = 0; i < params.size(); i++ ) {
                             if (params.at(i).type != fn.params.at(i).type){
-                                printf("Error at line %d: No function with this parameters found.\n", yylineno);
+                                printf("Error at line %d: Illegal call params.\n", yylineno);
                                 return 1;
                             }
                         }

@@ -1,55 +1,52 @@
 SYMBOL TABLE
 
 Variables List:
-Name: myVar, Type: int, Scope: MyFirstClass, Value: 3, Is Const?: NOT CONST
-Name: myFloatVar, Type: float, Scope: MyFirstClass, Is Const?: NOT CONST
-Name: var1, Type: int, Scope: myFunction, Is Const?: NOT CONST
-Name: abc, Type: int, Scope: testFunc, Is Const?: NOT CONST
-Name: myBoolVar, Type: bool, Scope: MySecondClass, Value: true, Is Const?: NOT CONST
-Name: myConstVar, Type: int, Scope: MySecondClass, Value: 10, Is Const?: CONST
-Name: a, Type: bool, Scope: computeValue, Value: false, Is Const?: NOT CONST
-Name: globalInt, Type: int, Scope: global, Is Const?: CONST
-Name: globalFloat, Type: float, Scope: global, Value: 1, Is Const?: NOT CONST
-Name: name, Type: string, Scope: globalFunction, Is Const?: NOT CONST
-Name: val, Type: int, Scope: function, Is Const?: NOT CONST
-Name: object, Type: MyFirstClass, Scope: main, Is Const?: NOT CONST
-Name: c, Type: int, Scope: main, Value: 11, Is Const?: NOT CONST
-Name: character, Type: char, Scope: main, Value: v, Is Const?: NOT CONST
-Name: constanta, Type: char, Scope: main, Value: c, Is Const?: CONST
+Name: x, Type: int, Scope: MyType, Value: 5, Is Const?: NOT CONST
+Name: y, Type: int, Scope: MyType, Is Const?: NOT CONST
+Name: z, Type: float, Scope: func, Value: 5, Is Const?: NOT CONST
+Name: ix, Type: int, Scope: global, Is Const?: NOT CONST
+Name: gix1, Type: int, Scope: global, Value: -3, Is Const?: NOT CONST
+Name: gix2, Type: int, Scope: global, Value: 102, Is Const?: NOT CONST
+Name: gf, Type: float, Scope: global, Value: 10.4, Is Const?: NOT CONST
+Name: gs, Type: string, Scope: global, String Value: A string, Is Const?: NOT CONST
+Name: gc, Type: char, Scope: global, Value: c, Is Const?: NOT CONST
+Name: gb, Type: bool, Scope: global, Value: false, Is Const?: NOT CONST
+Name: obj, Type: MyType, Scope: global, Is Const?: NOT CONST
+Name: abc, Type: int, Scope: function, Is Const?: NOT CONST
+Name: x, Type: int, Scope: f, Is Const?: NOT CONST
+Name: gf, Type: float, Scope: ff, Is Const?: NOT CONST
+Name: c, Type: int, Scope: main, Value: 13, Is Const?: NOT CONST
 Name: str, Type: string, Scope: main, String Value: alalala, Is Const?: NOT CONST
 Name: i, Type: int, Scope: main, Value: 1, Is Const?: NOT CONST
-Name: test, Type: int, Scope: main, Value: 12, Is Const?: NOT CONST
-Name: var, Type: MyFirstClass, Scope: main, Is Const?: NOT CONST
+Name: test, Type: int, Scope: main, Value: 18, Is Const?: NOT CONST
 
 Arrays List:
-Name: b, Type: int, Capacity: 4, Scope: main
-	Elements: 1 2 3 4 
+Name: gtab, Type: int, Capacity: 100, Scope: global
+	Elements: 10 
 Name: v, Type: float, Capacity: 125, Scope: main
-	Elements: -1.1 2.64074 
-Name: f, Type: char, Capacity: 20, Scope: main
-	Elements: c 
+	Elements: -1.1 0 
 Name: u, Type: int, Capacity: 3, Scope: main
 	Elements: 6 -3 8 
 
 Functions List:
-Name: myFunction, Return Type: int, Scope: MyFirstClass
+Name: func, Return Type: int, Scope: MyType
 	Parameters:
-Name: testFunc, Return Type: int, Scope: MyFirstClass
+		Name: y, Type: int, Is Const?: NOT CONST
+Name: MyType, Return Type: none (CONSTRUCTOR), Scope: MyType
 	Parameters:
-		Name: param, Type: int, Is Const?: NOT CONST
-		Name: param1, Type: int, Is Const?: CONST
-Name: MyFirstClass, Return Type: none (CONSTRUCTOR), Scope: MyFirstClass
-	Parameters:
-Name: computeValue, Return Type: bool, Scope: MySecondClass
-	Parameters:
-		Name: param, Type: int, Is Const?: NOT CONST
-Name: globalFunction, Return Type: string, Scope: global
-	Parameters:
-		Name: param2, Type: int, Is Const?: CONST
 Name: function, Return Type: int, Scope: global
 	Parameters:
 		Name: val, Type: int, Is Const?: NOT CONST
+Name: f, Return Type: int, Scope: global
+	Parameters:
+		Name: z, Type: int, Is Const?: NOT CONST
+		Name: f, Type: float, Is Const?: NOT CONST
+		Name: s, Type: string, Is Const?: NOT CONST
+Name: ff, Return Type: float, Scope: global
+	Parameters:
+		Name: x, Type: int, Is Const?: NOT CONST
+Name: check, Return Type: bool, Scope: global
+	Parameters:
 
 User Defined Types List:
-Name: MyFirstClass
-Name: MySecondClass
+Name: MyType

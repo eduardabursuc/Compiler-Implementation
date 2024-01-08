@@ -169,13 +169,13 @@ public:
             }
             vals.at(ind) = val;
             index = ind;
-        } 
-        else if (index == ind) 
+        }
+        else if (index == ind)
         {
             vals.push_back(val);
-            index ++;
-        } 
-        else 
+            index++;
+        }
+        else
         {
             vals.at(ind) = val;
         }
@@ -213,7 +213,7 @@ public:
         return false;
     }
 
-    bool existsVar(const char *type, string scope) 
+    bool existsVar(const char *type, string scope)
     {
         for (const auto &var : vars)
             if (var.val.type == type && var.scope == scope)
@@ -221,10 +221,11 @@ public:
         return false;
     }
 
-    int existsArr(const char*name) {
+    int existsArr(const char *name)
+    {
         for (const auto &array : arrays)
             if (array.name == name)
-                return 1; 
+                return 1;
         return 0;
     }
 
@@ -558,7 +559,7 @@ public:
 
     AST(Value *val) : val(*val)
     {
-       if (val->type == "int")
+        if (val->type == "int")
         {
             type = "int";
         }
@@ -627,24 +628,34 @@ public:
                 if (root == "+")
                 {
                     result.intVal = leftResult.intVal + rightResult.intVal;
+                    return result;
                 }
                 else if (root == "-")
                 {
                     result.intVal = leftResult.intVal - rightResult.intVal;
+                    return result;
                 }
                 else if (root == "*")
                 {
                     result.intVal = leftResult.intVal * rightResult.intVal;
+                    return result;
                 }
                 else if (root == "/")
                 {
                     result.intVal = leftResult.intVal / rightResult.intVal;
+                    return result;
                 }
                 else if (root == "%")
                 {
                     result.intVal = leftResult.intVal % rightResult.intVal;
+                    return result;
                 }
-                else if (root == "gt")
+
+                result.type = "bool";
+                result.isIntSet = false;
+                result.isBoolSet = true;
+
+                if (root == "gt")
                 {
                     result.boolVal = leftResult.intVal > rightResult.intVal;
                 }
@@ -668,6 +679,8 @@ public:
                 {
                     result.boolVal = leftResult.intVal != rightResult.intVal;
                 }
+
+                return result;
             }
             else if (left->type == "float")
             {
@@ -678,20 +691,29 @@ public:
                 if (root == "+")
                 {
                     result.floatVal = leftResult.floatVal + rightResult.floatVal;
+                    return result;
                 }
                 else if (root == "-")
                 {
                     result.floatVal = leftResult.floatVal - rightResult.floatVal;
+                    return result;
                 }
                 else if (root == "*")
                 {
                     result.floatVal = leftResult.floatVal * rightResult.floatVal;
+                    return result;
                 }
                 else if (root == "/")
                 {
                     result.floatVal = leftResult.floatVal / rightResult.floatVal;
+                    return result;
                 }
-                else if (root == "gt")
+
+                result.type = "bool";
+                result.isFloatSet = false;
+                result.isBoolSet = true;
+
+                if (root == "gt")
                 {
                     result.boolVal = leftResult.floatVal > rightResult.floatVal;
                 }
@@ -715,6 +737,8 @@ public:
                 {
                     result.boolVal = leftResult.floatVal != rightResult.floatVal;
                 }
+
+                return result;
             }
             else if (left->type == "bool")
             {
@@ -765,13 +789,18 @@ public:
             result.boolVal = !left->Eval().boolVal;
             result.type = "bool";
             return result;
-        } else if (left && root == "-"){
+        }
+        else if (left && root == "-")
+        {
             Value result;
-            if ( left->type == "float" ){
+            if (left->type == "float")
+            {
                 result.isFloatSet = true;
                 result.floatVal = -(left->Eval().floatVal);
                 result.type = "int";
-            } else {
+            }
+            else
+            {
                 result.isIntSet = true;
                 result.intVal = -(left->Eval().intVal);
                 result.type = "int";
