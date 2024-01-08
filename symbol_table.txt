@@ -9,7 +9,7 @@ Name: myBoolVar, Type: bool, Scope: MySecondClass, Value: true, Is Const?: NOT C
 Name: myConstVar, Type: int, Scope: MySecondClass, Value: 10, Is Const?: CONST
 Name: a, Type: bool, Scope: computeValue, Value: false, Is Const?: NOT CONST
 Name: globalInt, Type: int, Scope: global, Is Const?: CONST
-Name: globalFloat, Type: float, Scope: global, Is Const?: NOT CONST
+Name: globalFloat, Type: float, Scope: global, Value: 1, Is Const?: NOT CONST
 Name: name, Type: string, Scope: globalFunction, Is Const?: NOT CONST
 Name: val, Type: int, Scope: function, Is Const?: NOT CONST
 Name: object, Type: MyFirstClass, Scope: main, Is Const?: NOT CONST
@@ -18,18 +18,18 @@ Name: character, Type: char, Scope: main, Value: v, Is Const?: NOT CONST
 Name: constanta, Type: char, Scope: main, Value: c, Is Const?: CONST
 Name: str, Type: string, Scope: main, String Value: alalala, Is Const?: NOT CONST
 Name: i, Type: int, Scope: main, Value: 1, Is Const?: NOT CONST
-Name: test, Type: int, Scope: main, Value: 18, Is Const?: NOT CONST
+Name: test, Type: int, Scope: main, Value: 12, Is Const?: NOT CONST
 Name: var, Type: MyFirstClass, Scope: main, Is Const?: NOT CONST
 
 Arrays List:
 Name: b, Type: int, Capacity: 4, Scope: main
 	Elements: 1 2 3 4 
 Name: v, Type: float, Capacity: 125, Scope: main
-	Elements: 4.3 
+	Elements: -1.1 2.64074 
 Name: f, Type: char, Capacity: 20, Scope: main
 	Elements: c 
 Name: u, Type: int, Capacity: 3, Scope: main
-	Elements: 6 3 8 
+	Elements: 6 -3 8 
 
 Functions List:
 Name: myFunction, Return Type: int, Scope: MyFirstClass

@@ -169,8 +169,13 @@ public:
             }
             vals.at(ind) = val;
             index = ind;
-        }
-        else
+        } 
+        else if (index == ind) 
+        {
+            vals.push_back(val);
+            index ++;
+        } 
+        else 
         {
             vals.at(ind) = val;
         }
@@ -206,6 +211,21 @@ public:
                 return true;
 
         return false;
+    }
+
+    bool existsVar(const char *type, string scope) 
+    {
+        for (const auto &var : vars)
+            if (var.val.type == type && var.scope == scope)
+                return true;
+        return false;
+    }
+
+    int existsArr(const char*name) {
+        for (const auto &array : arrays)
+            if (array.name == name)
+                return 1; 
+        return 0;
     }
 
     int existsFunc(const char *name, string scope) // return 1 to check if array exists in scope
@@ -538,23 +558,23 @@ public:
 
     AST(Value *val) : val(*val)
     {
-        if (val->isIntSet)
+       if (val->type == "int")
         {
             type = "int";
         }
-        else if (val->isFloatSet)
+        else if (val->type == "float")
         {
             type = "float";
         }
-        else if (val->isBoolSet)
+        else if (val->type == "bool")
         {
             type = "bool";
         }
-        else if (val->isCharSet)
+        else if (val->type == "char")
         {
             type = "char";
         }
-        else if (val->isStringSet)
+        else if (val->type == "string")
         {
             type = "string";
         }
@@ -562,23 +582,23 @@ public:
 
     AST(Value val) : val(val)
     {
-        if (val.isIntSet)
+        if (val.type == "int")
         {
             type = "int";
         }
-        else if (val.isFloatSet)
+        else if (val.type == "float")
         {
             type = "float";
         }
-        else if (val.isBoolSet)
+        else if (val.type == "bool")
         {
             type = "bool";
         }
-        else if (val.isCharSet)
+        else if (val.type == "char")
         {
             type = "char";
         }
-        else if (val.isStringSet)
+        else if (val.type == "string")
         {
             type = "string";
         }
@@ -591,17 +611,18 @@ public:
         {
             return val;
         }
-        else if (left && right && left->TypeOf().compare(right->TypeOf()) == 0)
+        else if (left && right && left->TypeOf() == right->TypeOf())
         {
 
             Value leftResult = left->Eval();
             Value rightResult = right->Eval();
             Value result;
 
-            if (left->type.compare("int") == 0)
+            if (left->type == "int")
             {
 
                 result.type = "int";
+                result.isIntSet = true;
 
                 if (root == "+")
                 {
@@ -648,10 +669,11 @@ public:
                     result.boolVal = leftResult.intVal != rightResult.intVal;
                 }
             }
-            else if (left->type.compare("float") == 0)
+            else if (left->type == "float")
             {
 
                 result.type = "float";
+                result.isFloatSet = true;
 
                 if (root == "+")
                 {
@@ -694,10 +716,11 @@ public:
                     result.boolVal = leftResult.floatVal != rightResult.floatVal;
                 }
             }
-            else if (left->type.compare("bool") == 0)
+            else if (left->type == "bool")
             {
 
                 result.type = "bool";
+                result.isBoolSet = true;
 
                 if (root == "or")
                 {
@@ -740,6 +763,19 @@ public:
             Value result;
             result.isBoolSet = true;
             result.boolVal = !left->Eval().boolVal;
+            result.type = "bool";
+            return result;
+        } else if (left && root == "-"){
+            Value result;
+            if ( left->type == "float" ){
+                result.isFloatSet = true;
+                result.floatVal = -(left->Eval().floatVal);
+                result.type = "int";
+            } else {
+                result.isIntSet = true;
+                result.intVal = -(left->Eval().intVal);
+                result.type = "int";
+            }
             return result;
         }
         else

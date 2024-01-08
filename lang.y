@@ -701,7 +701,26 @@ statement: variable_declaration
                 }
             }
          }
-         | TYPEOF '(' ID ')' ';' {}
+         | TYPEOF '(' expression ')' ';' {
+            printf("[Line : %d]Type of expression is %s.\n",yylineno, $3->Eval().type.c_str());
+         }
+         | EVAL '(' expression ')' ';' {
+            Value result = $3->Eval();
+            if( result.type == "int" ) {
+                printf("[Line : %d]Value of expression is %d.\n",yylineno, result.intVal);
+            } else if( result.type == "float" ) {
+                printf("[Line : %d]Value of expression is %f.\n",yylineno, result.floatVal);
+            } else if( result.type == "char" ) {
+                printf("[Line : %d]Value of expression is %c.\n",yylineno, result.intVal);
+            } else if( result.type == "bool" ) {
+                    if( result.boolVal ){
+                        printf("[Line : %d]Value of expression is true.\n",yylineno);
+                    } else {
+                        printf("[Line : %d]Value of expression is false.\n",yylineno);
+                    }
+                
+            }
+         }
          ;
 
 assignment_statement: ID '=' expression ';' {
@@ -1019,6 +1038,9 @@ arithm_expr: arithm_expr '+' arithm_expr {
                }
                     
            }
+           | '-' arithm_expr {
+                $$ = new AST($2, "-", NULL);
+           }
            | '(' arithm_expr ')' {
                 $$ = $2;
            }
@@ -1031,7 +1053,9 @@ arithm_expr: arithm_expr '+' arithm_expr {
                $$ = new AST(new Value(identifierText, "float")); 
            }
            | fn_call {
-               $$ = new AST($1->val);
+            
+                $$ = new AST($1->val);
+               
             }
            | ID {
                 if( ids.exists($1) ) {
@@ -1226,41 +1250,47 @@ fn_call: ID '(' argument_list ')' {
             
             if( ids.exists($1) ) {
                 Function fn = ids.getFunc($1);
-
-                if ( params.size() != fn.params.size() ){
-                    printf("Error at line %d: The %s function call has inapropriate number of parameters.\n", yylineno, fn.name.c_str());
-                    return 1;
-                } else {
-                    for( int i = 0; i < params.size(); i++ ) {
-                        if (params.at(i).type != fn.params.at(i).type){
-                            printf("Error at line %d: The parameter .... should be of type %s.\n", yylineno, fn.params.at(i).type.c_str());
-                            return 1;
+                printf("function: %s from: %s in: %s\n",$1,fn.scope.c_str(), scope.c_str());
+                if (fn.scope == scope || fn.scope == "global" || ids.existsVar(fn.scope.c_str(), scope) ){
+                        if ( params.size() != fn.params.size() ){
+                        printf("Error at line %d: The %s function call has inapropriate number of parameters.\n", yylineno, fn.name.c_str());
+                        return 1;
+                    } else {
+                        for( int i = 0; i < params.size(); i++ ) {
+                            if (params.at(i).type != fn.params.at(i).type){
+                                printf("Error at line %d: No function with this parameters found.\n", yylineno);
+                                return 1;
+                            }
                         }
-                    }
-                    params.clear();
+                        params.clear();
 
-                    Value result(fn.returnType);
-                    if( result.type == "int" ){
-                        result.intVal = 0;
-                        result.isIntSet = true;
-                    } else if( result.type == "float" ){
-                        result.floatVal = 0.0;
-                        result.isFloatSet = true;
-                    } else if( result.type == "bool" ){
-                        result.boolVal = true;
-                        result.isIntSet = true;
-                    } else if( result.type == "char" ){
-                        result.charVal = '\0';
-                        result.isCharSet = true;
-                    } else if( result.type == "string" ){
-                        result.stringVal = "";
-                        result.isStringSet = true;
-                    }
-                    
-                   
-                    $$ = new Variable(fn.name.c_str(), result);
+                        Value result(fn.returnType);
+                        if( result.type == "int" ){
+                            result.intVal = 0;
+                            result.isIntSet = true;
+                        } else if( result.type == "float" ){
+                            result.floatVal = 0.0;
+                            result.isFloatSet = true;
+                        } else if( result.type == "bool" ){
+                            result.boolVal = true;
+                            result.isIntSet = true;
+                        } else if( result.type == "char" ){
+                            result.charVal = '\0';
+                            result.isCharSet = true;
+                        } else if( result.type == "string" ){
+                            result.stringVal = "";
+                            result.isStringSet = true;
+                        }
 
+                        $$ = new Variable(fn.name.c_str(), result);
+
+                    }
+                } else {
+                    printf("Error at line %d: Function not found in this scope.\n", yylineno);
+                    return 1;
                 }
+
+                
             }
         }
         ;

@@ -32,7 +32,7 @@ class MySecondClass {
 
 GLOBALVAR
 const int globalInt;
-float globalFloat;
+float globalFloat = 1.0;
 
 GLOBALFUNC
 fn string globalFunction(const int param2) {
@@ -45,6 +45,7 @@ fn int function(int val) {
     return val;
 }
 
+
 main {
     class MyFirstClass object;
     object.myVar = 3;
@@ -56,6 +57,7 @@ main {
         c = 1;
     }
     c = c + 10;
+    function(-2);
     char character;
     character = 'v';
     const char constanta = 'c';
@@ -63,12 +65,16 @@ main {
     int b[] = [1, 2, 3, 4];
     float v[125];
     int i = 1; 
-    char f[20];
-    v[i] = 1.6 + 2.7;
-    f[i] = 'c';
+    v[0] = 1.6 - 2.7;  
+    v[i] = 3.7 / 1.35 + v[0] + globalFloat; 
+    char f[20];  
+    f[10] = 'c';
+    TypeOf(f[10]);
     int u[] = [6, 7, 8];
-    u[i] = 3;
-    int test = 20 + 6 - 20 / 4 + u[i] + object.myFunction() + function(u[2]) - u[function(1)];
+    u[i] = -3;
+    Eval(u[i]);
+    Eval( 6+9-200 );
+    int test = 20 + 6 - 20 / 4 + u[i] + object.myFunction() - u[function(1)] + function(u[i]);
     class MyFirstClass var = object;
     return 0;
 }

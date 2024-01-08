@@ -36,6 +36,8 @@
 "break" { return BREAK; }
 "print" { return PRINT; }
 "const" { return CONST; }
+"TypeOf" { return TYPEOF;}
+"Eval" { return EVAL;}
 "int"|"float"|"char"|"string"|"bool" {yylval.string = strdup(yytext);return TYPE;}
 "class" {yylval.string = strdup(yytext); return CLASS;}
 [a-zA-Z][a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
