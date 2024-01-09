@@ -64,6 +64,21 @@ main {
     Eval( 6+9-200 );
     int test = 20 + 6 - 20 / 4 + u[i] + function(u[i]);
 
+    for( i = 1; i < 2; i + 1 ) {
+        bool t = true;
+    }
+
+
+    switch c {
+        case 10 : int a = 10; break;
+        default : int b = 2;
+    }
+
+    while a > 5 {
+        b = 1;
+        a = b + 3;
+    }
+
     gc = 'c';
     gs = "A string";
     gb = false;

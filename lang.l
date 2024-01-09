@@ -22,6 +22,7 @@
 "for" { return FOR; }
 "switch" { return SWITCH; }
 "case" { return CASE; }
+"default" {return DEFAULT;}
 "<" {return LT;}
 ">" {return GT;}
 "==" { return EQ; }

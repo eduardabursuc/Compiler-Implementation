@@ -705,20 +705,19 @@ statement: variable_declaration
             printf("[Line : %d]Type of expression is %s.\n",yylineno, $3->Eval().type.c_str());
          }
          | EVAL '(' expression ')' ';' {
-            Value result = $3->Eval();
-            if( result.type == "int" ) {
-                printf("[Line : %d]Value of expression is %d.\n",yylineno, result.intVal);
-            } else if( result.type == "float" ) {
-                printf("[Line : %d]Value of expression is %f.\n",yylineno, result.floatVal);
-            } else if( result.type == "char" ) {
-                printf("[Line : %d]Value of expression is %c.\n",yylineno, result.charVal);
-            } else if( result.type == "bool" ) {
-                    if( result.boolVal ){
-                        printf("[Line : %d]Value of expression is true.\n",yylineno);
-                    } else {
-                        printf("[Line : %d]Value of expression is false.\n",yylineno);
-                    }
-                
+            string type = $3->TypeOf();
+            if( type == "int" ) {
+                printf("[Line : %d]Value of expression is %d.\n",yylineno, $3->Eval().intVal);
+            } else if( type == "float" ) {
+                printf("[Line : %d]Value of expression is %f.\n",yylineno, $3->Eval().floatVal);
+            } else if( type == "char" ) {
+                printf("[Line : %d]Value of expression is %c.\n",yylineno, $3->Eval().charVal);
+            } else if( type == "bool" ) {
+                if( $3->Eval().boolVal != 0 ){
+                    printf("[Line : %d]Value of expression is true.\n",yylineno);
+                } else {
+                    printf("[Line : %d]Value of expression is false.\n",yylineno);
+                } 
             }
          }
          ;
@@ -968,7 +967,7 @@ control_statement: if_statement
                  | SWITCH STRING'{' case_block DEFAULT ':' block '}'
                  | SWITCH CHAR'{' case_block DEFAULT ':' block '}'
                  | WHILE bool_expr '{' block '}'
-                 | FOR '(' assignment_statement ';' bool_expr ';' assignment_statement ')' '{' block '}'
+                 | FOR '(' assignment_statement  bool_expr ';' arithm_expr ')' '{' block '}'
                  ;
 
                  
@@ -1093,7 +1092,7 @@ arithm_expr: arithm_expr '+' arithm_expr {
                $$ = new AST(new Value(identifierText, "float")); 
            }
            | fn_call {
-            
+
                 $$ = new AST($1->val);
                
             }

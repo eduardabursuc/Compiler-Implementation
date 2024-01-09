@@ -74,6 +74,8 @@ main {
     u[i] = -3;
     Eval(u[i]);
     Eval( 6+9-200 );
+    int l = 2;
+    Eval(false and l == 2);
     int test = 20 + 6 - 20 / 4 + u[i] + object.myFunction() - u[function(1)] + function(u[i]);
     class MyFirstClass var = object;
     return 0;
