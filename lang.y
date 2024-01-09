@@ -1000,6 +1000,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
                     return 1;
                }
+               if($1->Eval().type == "string" || $3->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
+                    return 1;
+               }
                if ($1->Eval().type == $3->Eval().type)
                 $$ = new AST($1, "+", $3);                
                    
@@ -1014,6 +1018,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
                     return 1;
                }
+               if($1->Eval().type == "string" || $3->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
+                    return 1;
+               }
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "-", $3); 
                else {
@@ -1024,6 +1032,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
            | arithm_expr '/' arithm_expr {
             if($1->Eval().type == "bool" || $3->Eval().type == "bool"){
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
+               if($1->Eval().type == "string" || $3->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
                     return 1;
                }
                if ($1->Eval().type == $3->Eval().type)
@@ -1038,6 +1050,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
                     return 1;
                }
+               if($1->Eval().type == "string" || $3->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
+                    return 1;
+               }
                if ($1->Eval().type == $3->Eval().type)
                    $$ = new AST($1, "*", $3); 
                else {
@@ -1048,6 +1064,10 @@ arithm_expr: arithm_expr '+' arithm_expr {
            | arithm_expr '%' arithm_expr {
             if($1->Eval().type == "bool" || $3->Eval().type == "bool"){
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
+               if($1->Eval().type == "string" || $3->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
                     return 1;
                }
                if ($1->Eval().type == $3->Eval().type)

@@ -616,10 +616,10 @@ static const yytype_int16 yyrline[] =
      660,   661,   662,   663,   678,   691,   704,   707,   726,   755,
      777,   797,   817,   841,   863,   889,   920,   942,   966,   967,
      968,   969,   970,   971,   975,   976,   980,   981,   984,   985,
-     986,   987,   988,   992,   993,   998,  1012,  1024,  1036,  1048,
-    1061,  1064,  1067,  1071,  1075,  1080,  1096,  1123,  1149,  1168,
-    1183,  1201,  1204,  1207,  1210,  1213,  1217,  1225,  1233,  1241,
-    1250,  1258,  1269,  1318,  1319,  1320
+     986,   987,   988,   992,   993,   998,  1016,  1032,  1048,  1064,
+    1081,  1084,  1087,  1091,  1095,  1100,  1116,  1143,  1169,  1188,
+    1203,  1221,  1224,  1227,  1230,  1233,  1237,  1245,  1253,  1261,
+    1270,  1278,  1289,  1338,  1339,  1340
 };
 #endif
 
@@ -2579,6 +2579,10 @@ yyreduce:
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
                     return 1;
                }
+               if((yyvsp[-2].ASTNode)->Eval().type == "string" || (yyvsp[0].ASTNode)->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
+                    return 1;
+               }
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
                 (yyval.ASTNode) = new AST((yyvsp[-2].ASTNode), "+", (yyvsp[0].ASTNode));                
                    
@@ -2588,14 +2592,18 @@ yyreduce:
                }
 
            }
-#line 2592 "lang.tab.c"
+#line 2596 "lang.tab.c"
     break;
 
   case 96: /* arithm_expr: arithm_expr '-' arithm_expr  */
-#line 1012 "lang.y"
+#line 1016 "lang.y"
                                          {
                 if((yyvsp[-2].ASTNode)->Eval().type == "bool" || (yyvsp[0].ASTNode)->Eval().type == "bool"){
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
+               if((yyvsp[-2].ASTNode)->Eval().type == "string" || (yyvsp[0].ASTNode)->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
                     return 1;
                }
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
@@ -2605,14 +2613,18 @@ yyreduce:
                     return 1;
                }
            }
-#line 2609 "lang.tab.c"
+#line 2617 "lang.tab.c"
     break;
 
   case 97: /* arithm_expr: arithm_expr '/' arithm_expr  */
-#line 1024 "lang.y"
+#line 1032 "lang.y"
                                          {
             if((yyvsp[-2].ASTNode)->Eval().type == "bool" || (yyvsp[0].ASTNode)->Eval().type == "bool"){
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
+               if((yyvsp[-2].ASTNode)->Eval().type == "string" || (yyvsp[0].ASTNode)->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
                     return 1;
                }
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
@@ -2622,14 +2634,18 @@ yyreduce:
                     return 1;
                }
            }
-#line 2626 "lang.tab.c"
+#line 2638 "lang.tab.c"
     break;
 
   case 98: /* arithm_expr: arithm_expr '*' arithm_expr  */
-#line 1036 "lang.y"
+#line 1048 "lang.y"
                                          {
             if((yyvsp[-2].ASTNode)->Eval().type == "bool" || (yyvsp[0].ASTNode)->Eval().type == "bool"){
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
+               if((yyvsp[-2].ASTNode)->Eval().type == "string" || (yyvsp[0].ASTNode)->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
                     return 1;
                }
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
@@ -2639,14 +2655,18 @@ yyreduce:
                     return 1;
                }
            }
-#line 2643 "lang.tab.c"
+#line 2659 "lang.tab.c"
     break;
 
   case 99: /* arithm_expr: arithm_expr '%' arithm_expr  */
-#line 1048 "lang.y"
+#line 1064 "lang.y"
                                          {
             if((yyvsp[-2].ASTNode)->Eval().type == "bool" || (yyvsp[0].ASTNode)->Eval().type == "bool"){
                     printf("Error at line %d: Invalid operation between bools.\n", yylineno);
+                    return 1;
+               }
+               if((yyvsp[-2].ASTNode)->Eval().type == "string" || (yyvsp[0].ASTNode)->Eval().type == "string"){
+                    printf("Error at line %d: Invalid operation between strings.\n", yylineno);
                     return 1;
                }
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
@@ -2657,55 +2677,55 @@ yyreduce:
                }
                     
            }
-#line 2661 "lang.tab.c"
+#line 2681 "lang.tab.c"
     break;
 
   case 100: /* arithm_expr: '-' arithm_expr  */
-#line 1061 "lang.y"
+#line 1081 "lang.y"
                              {
                 (yyval.ASTNode) = new AST((yyvsp[0].ASTNode), "-", NULL);
            }
-#line 2669 "lang.tab.c"
+#line 2689 "lang.tab.c"
     break;
 
   case 101: /* arithm_expr: '(' arithm_expr ')'  */
-#line 1064 "lang.y"
+#line 1084 "lang.y"
                                  {
                 (yyval.ASTNode) = (yyvsp[-1].ASTNode);
            }
-#line 2677 "lang.tab.c"
+#line 2697 "lang.tab.c"
     break;
 
   case 102: /* arithm_expr: INT  */
-#line 1067 "lang.y"
+#line 1087 "lang.y"
                  {
                char* identifierText = strdup(yytext);
                (yyval.ASTNode) = new AST(new Value(identifierText, "int")); 
            }
-#line 2686 "lang.tab.c"
+#line 2706 "lang.tab.c"
     break;
 
   case 103: /* arithm_expr: FLOAT  */
-#line 1071 "lang.y"
+#line 1091 "lang.y"
                    {
                char* identifierText = strdup(yytext);
                (yyval.ASTNode) = new AST(new Value(identifierText, "float")); 
            }
-#line 2695 "lang.tab.c"
+#line 2715 "lang.tab.c"
     break;
 
   case 104: /* arithm_expr: fn_call  */
-#line 1075 "lang.y"
+#line 1095 "lang.y"
                      {
             
                 (yyval.ASTNode) = new AST((yyvsp[0].var)->val);
                
             }
-#line 2705 "lang.tab.c"
+#line 2725 "lang.tab.c"
     break;
 
   case 105: /* arithm_expr: ID  */
-#line 1080 "lang.y"
+#line 1100 "lang.y"
                 {
                 if( ids.exists((yyvsp[0].string)) ) {
                     Variable var = ids.getVar((yyvsp[0].string));
@@ -2722,11 +2742,11 @@ yyreduce:
                     return 1;
                 }
            }
-#line 2726 "lang.tab.c"
+#line 2746 "lang.tab.c"
     break;
 
   case 106: /* arithm_expr: ID '.' ID  */
-#line 1096 "lang.y"
+#line 1116 "lang.y"
                        { 
                 if( ids.exists((yyvsp[-2].string)) ) {
                     Variable obj = ids.getVar((yyvsp[-2].string));
@@ -2754,11 +2774,11 @@ yyreduce:
                     return 1;
                 }
            }
-#line 2758 "lang.tab.c"
+#line 2778 "lang.tab.c"
     break;
 
   case 107: /* arithm_expr: ID '.' fn_call  */
-#line 1123 "lang.y"
+#line 1143 "lang.y"
                             {
                 if( ids.exists((yyvsp[-2].string)) ) {
                     Variable obj = ids.getVar((yyvsp[-2].string));
@@ -2785,11 +2805,11 @@ yyreduce:
 
                 }
            }
-#line 2789 "lang.tab.c"
+#line 2809 "lang.tab.c"
     break;
 
   case 108: /* arithm_expr: ID '[' ID ']'  */
-#line 1149 "lang.y"
+#line 1169 "lang.y"
                            {
                 if( ids.exists((yyvsp[-3].string)) && ids.exists((yyvsp[-1].string))) {
                     Array arr = ids.getArray((yyvsp[-3].string));
@@ -2809,11 +2829,11 @@ yyreduce:
                     return 1;
                 }
            }
-#line 2813 "lang.tab.c"
+#line 2833 "lang.tab.c"
     break;
 
   case 109: /* arithm_expr: ID '[' INT ']'  */
-#line 1168 "lang.y"
+#line 1188 "lang.y"
                             {
                 if( ids.exists((yyvsp[-3].string)) ) {
                     Array arr = ids.getArray((yyvsp[-3].string));
@@ -2829,11 +2849,11 @@ yyreduce:
                 }
 
            }
-#line 2833 "lang.tab.c"
+#line 2853 "lang.tab.c"
     break;
 
   case 110: /* arithm_expr: ID '[' fn_call ']'  */
-#line 1183 "lang.y"
+#line 1203 "lang.y"
                                 {
                 if( ids.exists((yyvsp[-3].string))) {
                     Array arr = ids.getArray((yyvsp[-3].string));
@@ -2849,52 +2869,52 @@ yyreduce:
                     return 1;
                 }
            }
-#line 2853 "lang.tab.c"
+#line 2873 "lang.tab.c"
     break;
 
   case 111: /* bool_expr: bool_expr AND bool_expr  */
-#line 1201 "lang.y"
+#line 1221 "lang.y"
                                    {
                (yyval.ASTNode) = new AST((yyvsp[-2].ASTNode), "and", (yyvsp[0].ASTNode)); 
          }
-#line 2861 "lang.tab.c"
+#line 2881 "lang.tab.c"
     break;
 
   case 112: /* bool_expr: bool_expr OR bool_expr  */
-#line 1204 "lang.y"
+#line 1224 "lang.y"
                                   {
                (yyval.ASTNode) = new AST((yyvsp[-2].ASTNode), "or", (yyvsp[0].ASTNode)); 
            }
-#line 2869 "lang.tab.c"
+#line 2889 "lang.tab.c"
     break;
 
   case 113: /* bool_expr: NOT bool_expr  */
-#line 1207 "lang.y"
+#line 1227 "lang.y"
                          {
                (yyval.ASTNode) = new AST((yyvsp[0].ASTNode), "not", NULL); 
          }
-#line 2877 "lang.tab.c"
+#line 2897 "lang.tab.c"
     break;
 
   case 114: /* bool_expr: '(' bool_expr ')'  */
-#line 1210 "lang.y"
+#line 1230 "lang.y"
                              {
             (yyval.ASTNode) = (yyvsp[-1].ASTNode);
          }
-#line 2885 "lang.tab.c"
+#line 2905 "lang.tab.c"
     break;
 
   case 115: /* bool_expr: BOOL  */
-#line 1213 "lang.y"
+#line 1233 "lang.y"
                 { 
             char* identifierText = strdup(yytext);
             (yyval.ASTNode) = new AST(new Value(identifierText, "bool"));
           }
-#line 2894 "lang.tab.c"
+#line 2914 "lang.tab.c"
     break;
 
   case 116: /* bool_expr: arithm_expr GT arithm_expr  */
-#line 1217 "lang.y"
+#line 1237 "lang.y"
                                       {
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
                    (yyval.ASTNode) = new AST((yyvsp[-2].ASTNode), "gt", (yyvsp[0].ASTNode)); 
@@ -2903,11 +2923,11 @@ yyreduce:
                     return 1;
                }
            }
-#line 2907 "lang.tab.c"
+#line 2927 "lang.tab.c"
     break;
 
   case 117: /* bool_expr: arithm_expr LT arithm_expr  */
-#line 1225 "lang.y"
+#line 1245 "lang.y"
                                       {
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
                    (yyval.ASTNode) = new AST((yyvsp[-2].ASTNode), "lt", (yyvsp[0].ASTNode)); 
@@ -2916,11 +2936,11 @@ yyreduce:
                     return 1;
                }
            }
-#line 2920 "lang.tab.c"
+#line 2940 "lang.tab.c"
     break;
 
   case 118: /* bool_expr: arithm_expr GEQ arithm_expr  */
-#line 1233 "lang.y"
+#line 1253 "lang.y"
                                        {
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
                    (yyval.ASTNode) = new AST((yyvsp[-2].ASTNode), "geq", (yyvsp[0].ASTNode)); 
@@ -2929,11 +2949,11 @@ yyreduce:
                     return 1;
                }
            }
-#line 2933 "lang.tab.c"
+#line 2953 "lang.tab.c"
     break;
 
   case 119: /* bool_expr: arithm_expr LEQ arithm_expr  */
-#line 1241 "lang.y"
+#line 1261 "lang.y"
                                        {
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
                    (yyval.ASTNode) = new AST((yyvsp[-2].ASTNode), "leq", (yyvsp[0].ASTNode)); 
@@ -2943,11 +2963,11 @@ yyreduce:
                }
                     
            }
-#line 2947 "lang.tab.c"
+#line 2967 "lang.tab.c"
     break;
 
   case 120: /* bool_expr: arithm_expr EQ arithm_expr  */
-#line 1250 "lang.y"
+#line 1270 "lang.y"
                                       {
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
                    (yyval.ASTNode) = new AST((yyvsp[-2].ASTNode), "eq", (yyvsp[0].ASTNode)); 
@@ -2956,11 +2976,11 @@ yyreduce:
                     return 1;
                }
            }
-#line 2960 "lang.tab.c"
+#line 2980 "lang.tab.c"
     break;
 
   case 121: /* bool_expr: arithm_expr NEQ arithm_expr  */
-#line 1258 "lang.y"
+#line 1278 "lang.y"
                                        {
                if ((yyvsp[-2].ASTNode)->Eval().type == (yyvsp[0].ASTNode)->Eval().type)
                    (yyval.ASTNode) = new AST((yyvsp[-2].ASTNode), "neq", (yyvsp[0].ASTNode)); 
@@ -2969,11 +2989,11 @@ yyreduce:
                     return 1;
                }
            }
-#line 2973 "lang.tab.c"
+#line 2993 "lang.tab.c"
     break;
 
   case 122: /* fn_call: ID '(' argument_list ')'  */
-#line 1269 "lang.y"
+#line 1289 "lang.y"
                                   { 
             
             if( ids.exists((yyvsp[-3].string)) ) {
@@ -3020,23 +3040,23 @@ yyreduce:
                 
             }
         }
-#line 3024 "lang.tab.c"
+#line 3044 "lang.tab.c"
     break;
 
   case 124: /* argument_list: expression  */
-#line 1319 "lang.y"
+#line 1339 "lang.y"
                           { params.push_back((yyvsp[0].ASTNode)->Eval());}
-#line 3030 "lang.tab.c"
+#line 3050 "lang.tab.c"
     break;
 
   case 125: /* argument_list: argument_list ',' expression  */
-#line 1320 "lang.y"
+#line 1340 "lang.y"
                                             { params.push_back((yyvsp[0].ASTNode)->Eval());}
-#line 3036 "lang.tab.c"
+#line 3056 "lang.tab.c"
     break;
 
 
-#line 3040 "lang.tab.c"
+#line 3060 "lang.tab.c"
 
       default: break;
     }
@@ -3229,7 +3249,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 1323 "lang.y"
+#line 1343 "lang.y"
 
 void yyerror(const char * s) {
     std::cerr << "error: " << s << " at line:" << yylineno << std::endl;
