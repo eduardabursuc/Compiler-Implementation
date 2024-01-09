@@ -22,6 +22,10 @@ Name: test, Type: int, Scope: main, Value: 18, Is Const?: NOT CONST
 Name: t, Type: bool, Scope: main, Value: true, Is Const?: NOT CONST
 Name: a, Type: int, Scope: main, Value: 4, Is Const?: NOT CONST
 Name: b, Type: int, Scope: main, Value: 1, Is Const?: NOT CONST
+Name: xcx, Type: string, Scope: main, String Value: lalala, Is Const?: CONST
+Name: chh, Type: char, Scope: main, Value: a, Is Const?: CONST
+Name: constint, Type: int, Scope: main, Value: 5, Is Const?: CONST
+Name: mix, Type: int, Scope: main, Is Const?: NOT CONST
 
 Arrays List:
 Name: gtab, Type: int, Capacity: 100, Scope: global

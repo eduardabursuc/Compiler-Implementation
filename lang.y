@@ -405,7 +405,7 @@ variable_declaration: TYPE ID ';' {
                             return 1;
                         }
                         string type = "string";
-                        if ($2 == "string") {
+                        if ($2 == type) {
                             Value val($2);
                             val.isConst = true;
                             val.stringVal = $5;

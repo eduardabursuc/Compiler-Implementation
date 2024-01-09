@@ -1877,7 +1877,7 @@ yyreduce:
                             return 1;
                         }
                         string type = "string";
-                        if ((yyvsp[-4].string) == "string") {
+                        if ((yyvsp[-4].string) == type) {
                             Value val((yyvsp[-4].string));
                             val.isConst = true;
                             val.stringVal = (yyvsp[-1].string);
