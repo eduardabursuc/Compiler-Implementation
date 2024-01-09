@@ -726,6 +726,10 @@ assignment_statement: ID '=' expression ';' {
                         if( ids.exists($1) ) {
                             Value result = $3->Eval();
                             Variable& var = ids.getVar($1);
+                            if(var.val.isConst) {
+                                printf("Error at line %d: Cannot assign value to a constant variable.\n", yylineno);
+                                return 1;
+                            }
                             if (var.scope == scope || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope) ) {
                                 if (var.val.type == $3->TypeOf()){
                                 if (var.val.type == "int") {
@@ -755,6 +759,10 @@ assignment_statement: ID '=' expression ';' {
                         if( ids.exists($1) ) {
 
                             Variable& var = ids.getVar($1);
+                            if(var.val.isConst) {
+                                printf("Error at line %d: Cannot assign value to a constant variable.\n", yylineno);
+                                return 1;
+                            }
                             if (var.scope == scope || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope) ) {
                                 if (var.val.type == "char"){
                                     var.val.isCharSet = true;
@@ -776,6 +784,10 @@ assignment_statement: ID '=' expression ';' {
                     | ID '=' STRING ';' {
                         if( ids.exists($1) ) {
                             Variable& var = ids.getVar($1);
+                            if(var.val.isConst) {
+                                printf("Error at line %d: Cannot assign value to a constant variable.\n", yylineno);
+                                return 1;
+                            }
                             if (var.scope == scope || var.scope == "global" || (ids.exists(scope.c_str()) && var.scope == ids.getFunc(scope.c_str()).scope) ) {
                                 if (var.val.type == "string"){
                                     var.val.isStringSet = true;

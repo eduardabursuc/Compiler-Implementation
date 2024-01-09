@@ -97,5 +97,9 @@ main {
     gix1 = gix1 + f(10,10.5,gs) + obj.x - gtab[5];
     TypeOf(gix1+5);
     TypeOf(gs);
+    const char chh = 'a';
+    chh = 'b';
+    const int constint = 5;
+    constint = 6;
 }
 EXIT
